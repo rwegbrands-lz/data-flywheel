@@ -1,16 +1,45 @@
-# React + Vite
+# Data Flywheel — Guardian Risk App
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Internal tool for defining, tracking, and consuming risk signals across the LegalZoom customer data flywheel.
 
-Currently, two official plugins are available:
+## What it does
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+Each risk in the system moves through three stages:
 
-## React Compiler
+| Stage | Description |
+|-------|-------------|
+| **Ingest** | What data points are required, where they come from, and their availability status |
+| **Reason** | Green / Yellow / Red logic, impact quantification, and the review/deployment lifecycle |
+| **Consume** | Which surfaces (MyLZ, Salesforce, LCM) display the risk signal and at what status |
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+The risk detail page includes an interactive flywheel diagram, inline-editable metadata, and a History tab for notes and future change tracking.
 
-## Expanding the ESLint configuration
+## Running locally
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+```bash
+npm install
+npm run dev
+```
+
+Open [http://localhost:5173](http://localhost:5173).
+
+## Building
+
+```bash
+npm run build       # production build → dist/
+npm run preview     # preview the production build locally
+```
+
+## Stack
+
+- **React 19** + **Vite 8**
+- Inline styles throughout (no CSS framework)
+- Risk data lives in `src/data/risks.json` — edit there to add or update risks
+
+## Contributing
+
+All changes go through a pull request. Direct pushes to `main` are blocked.
+
+1. Create a feature branch: `git checkout -b your-name/description`
+2. Make changes and commit
+3. Open a PR against `main`
