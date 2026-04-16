@@ -25,7 +25,7 @@ function DRIBadge({ initial, color }) {
     <div style={{
       width: 22, height: 22, borderRadius: '50%',
       background: color, color: '#fff',
-      fontSize: 9, fontWeight: 700,
+      fontSize: 13, fontWeight: 700,
       display: 'flex', alignItems: 'center', justifyContent: 'center'
     }}>
       {initial}
@@ -64,13 +64,13 @@ export default function RiskCard({ risk, onClick }) {
       {/* Top row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <span style={{
-          fontSize: 10, fontWeight: 700, color: priority.color,
+          fontSize: 13, fontWeight: 700, color: priority.color,
           background: priority.bg, borderRadius: 4, padding: '2px 6px'
         }}>
           {risk.priority}
         </span>
         <span style={{
-          fontSize: 10, fontWeight: 600, color: '#fff',
+          fontSize: 13, fontWeight: 600, color: '#fff',
           background: status.dot, borderRadius: 4, padding: '2px 6px'
         }}>
           {status.label}
@@ -78,20 +78,20 @@ export default function RiskCard({ risk, onClick }) {
       </div>
 
       {/* Name */}
-      <div style={{ fontSize: 14, fontWeight: 700, color: '#0F172A', marginBottom: 6, lineHeight: 1.3 }}>
+      <div style={{ fontSize: 16, fontWeight: 700, color: '#0F172A', marginBottom: 6, lineHeight: 1.3 }}>
         {risk.name}
       </div>
 
       {/* Exposure */}
-      <div style={{ fontSize: 11, color: '#94A3B8', marginBottom: 14 }}>
+      <div style={{ fontSize: 13, color: '#475569', marginBottom: 14 }}>
         {risk.exposure || '—'}
       </div>
 
       {/* DRIs */}
       <div style={{ display: 'flex', gap: 4 }}>
-        <DRIBadge initial={getInitials(risk.dris?.legal?.name)} color="#94A3B8" />
-        <DRIBadge initial={getInitials(risk.dris?.product?.name)} color="#94A3B8" />
-        <DRIBadge initial={getInitials(risk.dris?.engineering?.name)} color="#94A3B8" />
+        <DRIBadge initial={getInitials(risk.dris?.legal?.name)} color="#64748B" />
+        <DRIBadge initial={getInitials(risk.dris?.product?.name)} color="#64748B" />
+        <DRIBadge initial={getInitials(risk.dris?.engineering?.name)} color="#64748B" />
       </div>
     </div>
   )

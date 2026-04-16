@@ -36,10 +36,8 @@ export default function RiskDetail({ risk, updateRisk, onBack }) {
         position: 'sticky',
         top: 0,
         zIndex: 100,
-        background: 'rgba(255, 255, 255, 0.82)',
-        backdropFilter: 'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
-        borderBottom: '1px solid rgba(226, 232, 240, 0.7)',
+        background: '#1E293B',
+        borderBottom: '1px solid #334155',
       }}>
         <DetailHeader
           risk={risk}

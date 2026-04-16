@@ -22,20 +22,30 @@ function GridIcon() {
   )
 }
 
-export default function FilterBar({ filterCategory, filterStatus, filterPriority, setFilterCategory, setFilterStatus, setFilterPriority, shown, total, viewMode, setViewMode }) {
+const labelStyle = {
+  fontSize: 11,
+  fontWeight: 700,
+  color: '#94A3B8',
+  textTransform: 'uppercase',
+  letterSpacing: '0.06em',
+  flexShrink: 0,
+}
+
+export default function FilterBar({ filterCategory, filterStatus, filterPriority, setFilterCategory, setFilterStatus, setFilterPriority, shown, total, viewMode, setViewMode, sortBy, setSortBy }) {
   const selStyle = {
-    fontSize: 13,
-    color: '#374151',
-    border: '1px solid #E2E8F0',
+    fontSize: 14,
+    color: '#F1F5F9',
+    border: '1px solid #475569',
     borderRadius: 8,
     padding: '6px 10px',
-    background: '#fff',
+    background: '#334155',
     cursor: 'pointer',
     outline: 'none',
   }
 
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 32px' }}>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 32px', flexWrap: 'wrap' }}>
+      <span style={labelStyle}>Filters:</span>
       <select style={selStyle} value={filterCategory} onChange={e => setFilterCategory(e.target.value)}>
         <option value="all">All Categories</option>
         {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
@@ -50,8 +60,21 @@ export default function FilterBar({ filterCategory, filterStatus, filterPriority
         <option value="P1">P1</option>
         <option value="P2">P2</option>
       </select>
-      <span style={{ marginLeft: 'auto', fontSize: 12, color: '#94A3B8' }}>
-        Showing <strong style={{ color: '#374151' }}>{shown}</strong> of <strong style={{ color: '#374151' }}>{total}</strong> risks
+
+      <div style={{ width: 1, height: 24, background: '#475569', margin: '0 4px', flexShrink: 0 }} />
+
+      <span style={labelStyle}>Sort by:</span>
+      <select style={selStyle} value={sortBy} onChange={e => setSortBy(e.target.value)}>
+        <option value="progress_desc">Progress Desc</option>
+        <option value="progress_asc">Progress Asc</option>
+        <option value="status_desc">Overall Status Desc</option>
+        <option value="status_asc">Overall Status Asc</option>
+        <option value="count_desc">Total Risk Count Desc</option>
+        <option value="count_asc">Total Risk Count Asc</option>
+      </select>
+
+      <span style={{ marginLeft: 'auto', fontSize: 14, color: '#94A3B8' }}>
+        Showing <strong style={{ color: '#F1F5F9' }}>{shown}</strong> of <strong style={{ color: '#F1F5F9' }}>{total}</strong> risks
       </span>
       <button
         onClick={() => setViewMode(viewMode === 'grid' ? 'list' : 'grid')}
@@ -59,8 +82,8 @@ export default function FilterBar({ filterCategory, filterStatus, filterPriority
         style={{
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           width: 32, height: 32, borderRadius: 8,
-          border: '1px solid #E2E8F0', background: '#fff',
-          color: '#64748B', cursor: 'pointer', flexShrink: 0,
+          border: '1px solid #475569', background: '#334155',
+          color: '#94A3B8', cursor: 'pointer', flexShrink: 0,
           transition: 'background 0.15s, color 0.15s',
         }}
       >

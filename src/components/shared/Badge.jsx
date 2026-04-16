@@ -5,7 +5,7 @@ export default function Badge({ label, color, bg, style }) {
       alignItems: 'center',
       padding: '2px 8px',
       borderRadius: 9999,
-      fontSize: 11,
+      fontSize: 13,
       fontWeight: 700,
       color,
       background: bg,

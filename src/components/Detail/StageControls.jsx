@@ -16,13 +16,13 @@ export default function StageControls({ flywheel, onUpdateStage }) {
           <div key={stage.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: STAGE_COLORS_MAP[stageStatus] }} />
-              <span style={{ fontSize: 12, color: '#374151' }}>{stage.label}</span>
+              <span style={{ fontSize: 14, color: '#374151' }}>{stage.label}</span>
             </div>
             <select
               value={stageStatus}
               onChange={e => onUpdateStage(stage.id, e.target.value)}
               style={{
-                fontSize: 11, color: '#374151', border: '1px solid #E2E8F0',
+                fontSize: 13, color: '#374151', border: '1px solid #E2E8F0',
                 borderRadius: 6, padding: '3px 8px', background: '#fff', cursor: 'pointer'
               }}
             >

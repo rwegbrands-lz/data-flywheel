@@ -7,7 +7,7 @@
     "status": "live",
     "riskScore": "green",
     "confidence": 0.94,
-    "exposure": "$5k\u2013$50k+",
+    "exposure": "$5k–$50k+",
     "severity": 3,
     "likelihood": 5,
     "summary": "Loss of good standing leads to fines or blocked deals.",
@@ -59,7 +59,7 @@
     "logic": {
       "status": "live",
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "IF(\n  (entity_status != 'Active' AND entity_status != 'Good Standing')\n  OR\n  (\n    (annual_report_due_date < today)\n    AND (annual_report_status != 'complete')\n  )\n)",
         "humanReadable": "Entity is NOT in good standing, OR annual report is past due and not filed.",
         "nextBestAction": "Reinstatement",
@@ -70,7 +70,7 @@
         ]
       },
       "yellow": {
-        "label": "Monitor \u2014 Due Soon",
+        "label": "Monitor — Due Soon",
         "pseudoFunction": "IF(\n  entity_status == 'Active'\n  AND (annual_report_due_date - today) <= 45\n  AND (annual_report_due_date - today) > 0\n  AND compliance_filing_status_current_year != 'Completed'\n)",
         "humanReadable": "Entity is in good standing but annual report due within 45 days and not yet filed.",
         "nextBestAction": "File Annual Report",
@@ -79,10 +79,10 @@
           "annual_report_due_date",
           "compliance_filing_status_current_year"
         ],
-        "openQuestion": "Sheet uses 'entity_good_standing_status' in yellow logic but stored field is 'entity_status' \u2014 confirm these map to the same field."
+        "openQuestion": "Sheet uses 'entity_good_standing_status' in yellow logic but stored field is 'entity_status' — confirm these map to the same field."
       },
       "green": {
-        "label": "Low Risk \u2014 Compliant",
+        "label": "Low Risk — Compliant",
         "pseudoFunction": "entity_status IN ['Active', 'Good Standing']\nAND (annual_report_due_date - today) > 45\nAND annual_report_status == 'complete'",
         "humanReadable": "Entity is in good standing and annual report is filed and not due within 45 days.",
         "dataPointsUsed": [
@@ -145,7 +145,7 @@
           "display": "Internal: BP/DB",
           "availability": "Partial",
           "notes": "BP data captures LZ-filed reports. Need SOS scrape for reports filed outside LZ.",
-          "gap": "Customers who file their annual report themselves or through a third party may show as 'not filed' unless SOS scrape is active."
+          "gap": null
         },
         "flywheelStage": "businessProfile"
       },
@@ -264,9 +264,21 @@
     },
     "consume": {
       "surfaces": [
-        { "surface": "MyLZ", "note": "Displayed in the Risk Dashboard card and risk detail view. Red/Yellow states trigger action prompts.", "status": "live" },
-        { "surface": "Salesforce", "note": "Surfaced as a risk signal on the Account and Opportunity pages for agent outreach context.", "status": "in_progress" },
-        { "surface": "LCM", "note": "", "status": "identified" }
+        {
+          "surface": "MyLZ",
+          "note": "Displayed in the Risk Dashboard card and risk detail view. Red/Yellow states trigger action prompts.",
+          "status": "live"
+        },
+        {
+          "surface": "Salesforce",
+          "note": "Surfaced as a risk signal on the Account and Opportunity pages for agent outreach context.",
+          "status": "in_progress"
+        },
+        {
+          "surface": "LCM",
+          "note": "",
+          "status": "identified"
+        }
       ]
     },
     "notes": [
@@ -275,6 +287,12 @@
         "role": "Legal",
         "date": "2026-04-14",
         "text": "SOS scrape confirmed active for CA, TX, FL, NY. Remaining states in Q2 backlog."
+      },
+      {
+        "author": "Rob Wegbrands",
+        "role": "Product",
+        "date": "2026-04-16",
+        "text": "Data gap: Customers who file their annual report themselves or through a third party may show as 'not filed' unless SOS scrape is active."
       }
     ]
   },
@@ -286,7 +304,7 @@
     "status": "live",
     "riskScore": "yellow",
     "confidence": 0.82,
-    "exposure": "$10k\u2013$100k+",
+    "exposure": "$10k–$100k+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Missing or outdated operating agreement creates ownership disputes and personal liability exposure.",
@@ -318,7 +336,7 @@
     ],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "IF(operating_agreement_exists == false OR operating_agreement_date < entity_last_major_change_date)",
         "humanReadable": "No operating agreement exists, or existing one predates a major ownership change.",
         "nextBestAction": "Create or Update Operating Agreement",
@@ -329,7 +347,7 @@
         ]
       },
       "yellow": {
-        "label": "Monitor \u2014 Review Recommended",
+        "label": "Monitor — Review Recommended",
         "pseudoFunction": "IF(operating_agreement_age_years > 2 AND no_amendments_since_last_change)",
         "humanReadable": "Operating agreement exists but is over 2 years old with no recent amendments.",
         "nextBestAction": "Review and Update Operating Agreement",
@@ -339,7 +357,7 @@
         ]
       },
       "green": {
-        "label": "Low Risk \u2014 Current",
+        "label": "Low Risk — Current",
         "pseudoFunction": "operating_agreement_exists == true AND operating_agreement_age_years <= 2",
         "humanReadable": "Operating agreement is current and up to date.",
         "dataPointsUsed": [
@@ -382,7 +400,7 @@
           "display": "Internal: BP/DB",
           "availability": "Partial",
           "notes": "Date captured when LZ drafts the OA. Self-uploaded documents may lack date metadata.",
-          "gap": "Date may be missing for self-uploaded OAs."
+          "gap": null
         },
         "flywheelStage": "businessProfile"
       }
@@ -443,7 +461,14 @@
         "email": null
       }
     },
-    "notes": []
+    "notes": [
+      {
+        "author": "Rob Wegbrands",
+        "role": "Product",
+        "date": "2026-04-16",
+        "text": "Data gap: Date may be missing for self-uploaded OAs."
+      }
+    ]
   },
   {
     "id": "business_name_conflict",
@@ -453,7 +478,7 @@
     "status": "live",
     "riskScore": "green",
     "confidence": 0.88,
-    "exposure": "$5k\u2013$25k",
+    "exposure": "$5k–$25k",
     "severity": 3,
     "likelihood": 2,
     "summary": "Undetected trademark or name conflicts can result in forced rebrand or litigation.",
@@ -486,7 +511,7 @@
     ],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Conflict Detected",
+        "label": "High Risk — Conflict Detected",
         "pseudoFunction": "IF(trademark_conflict_detected == true OR cease_and_desist_received == true)",
         "humanReadable": "Active conflict or C&D detected.",
         "nextBestAction": "Consult IP Attorney",
@@ -496,7 +521,7 @@
         ]
       },
       "yellow": {
-        "label": "Monitor \u2014 No Search on File",
+        "label": "Monitor — No Search on File",
         "pseudoFunction": "IF(trademark_search_completed == false OR trademark_registration_status == 'pending')",
         "humanReadable": "No trademark search on record or registration still pending.",
         "nextBestAction": "Complete Trademark Search",
@@ -506,7 +531,7 @@
         ]
       },
       "green": {
-        "label": "Low Risk \u2014 Protected",
+        "label": "Low Risk — Protected",
         "pseudoFunction": "trademark_registered == true AND no_conflicts_detected == true",
         "humanReadable": "Trademark registered with no conflicts detected.",
         "dataPointsUsed": [
@@ -615,7 +640,7 @@
     "status": "validation",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$50k",
+    "exposure": "$2k–$50k",
     "severity": 4,
     "likelihood": 3,
     "summary": "Operating without required licenses or with lapsed permits creates regulatory and financial exposure.",
@@ -641,7 +666,7 @@
     ],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 License Lapsed",
+        "label": "High Risk — License Lapsed",
         "pseudoFunction": "IF(license_status == 'expired' OR license_status == 'missing')",
         "humanReadable": "Required license is expired or missing.",
         "nextBestAction": "Renew or Obtain License",
@@ -651,7 +676,7 @@
         ]
       },
       "yellow": {
-        "label": "Monitor \u2014 Expiring Soon",
+        "label": "Monitor — Expiring Soon",
         "pseudoFunction": "IF((license_expiry_date - today) <= 60 AND license_status == 'active')",
         "humanReadable": "License active but expiring within 60 days.",
         "nextBestAction": "Renew License",
@@ -661,7 +686,7 @@
         ]
       },
       "green": {
-        "label": "Low Risk \u2014 Current",
+        "label": "Low Risk — Current",
         "pseudoFunction": "license_status == 'active' AND (license_expiry_date - today) > 60",
         "humanReadable": "All required licenses are active and not expiring soon.",
         "dataPointsUsed": [
@@ -686,7 +711,7 @@
           "display": "External: State/Local",
           "availability": "Partial",
           "notes": "Data availability varies by jurisdiction.",
-          "gap": "Coverage incomplete for municipalities with no API."
+          "gap": null
         },
         "flywheelStage": "ingestion"
       }
@@ -748,7 +773,14 @@
         "email": null
       }
     },
-    "notes": []
+    "notes": [
+      {
+        "author": "Rob Wegbrands",
+        "role": "Product",
+        "date": "2026-04-16",
+        "text": "Data gap: Coverage incomplete for municipalities with no API."
+      }
+    ]
   },
   {
     "id": "entity_type_tax_election",
@@ -758,7 +790,7 @@
     "status": "in_dev",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$30k",
+    "exposure": "$5k–$30k",
     "severity": 3,
     "likelihood": 3,
     "summary": "Wrong entity structure or missed tax elections can result in unnecessary tax burden.",
@@ -784,7 +816,7 @@
     ],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Missed Election",
+        "label": "High Risk — Missed Election",
         "pseudoFunction": "IF(entity_type == 'LLC' AND revenue > 75000 AND scorp_election_filed == false AND scorp_deadline_passed == true)",
         "humanReadable": "LLC with revenue over $75k that missed S-Corp election window.",
         "nextBestAction": "Consult Tax Professional",
@@ -796,7 +828,7 @@
         ]
       },
       "yellow": {
-        "label": "Monitor \u2014 Election Window Open",
+        "label": "Monitor — Election Window Open",
         "pseudoFunction": "IF(entity_type == 'LLC' AND revenue > 50000 AND scorp_election_filed == false AND days_until_scorp_deadline <= 30)",
         "humanReadable": "LLC approaching S-Corp election window with meaningful revenue.",
         "nextBestAction": "Review S-Corp Election",
@@ -807,7 +839,7 @@
         ]
       },
       "green": {
-        "label": "Low Risk \u2014 Optimized",
+        "label": "Low Risk — Optimized",
         "pseudoFunction": "scorp_election_filed == true OR (entity_type == 'LLC' AND revenue < 50000)",
         "humanReadable": "Tax structure is optimized or revenue too low to benefit from S-Corp.",
         "dataPointsUsed": [
@@ -851,8 +883,8 @@
           "name": "BP/DB",
           "display": "Internal: BP/DB",
           "availability": "Partial",
-          "notes": "Self-reported \u2014 may be stale or missing.",
-          "gap": "Revenue data is self-reported and may not be current."
+          "notes": "Self-reported — may be stale or missing.",
+          "gap": null
         },
         "flywheelStage": "businessProfile"
       }
@@ -917,7 +949,14 @@
         "email": null
       }
     },
-    "notes": []
+    "notes": [
+      {
+        "author": "Rob Wegbrands",
+        "role": "Product",
+        "date": "2026-04-16",
+        "text": "Data gap: Revenue data is self-reported and may not be current."
+      }
+    ]
   },
   {
     "id": "registered_agent_failure",
@@ -927,7 +966,7 @@
     "status": "in_dev",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$20k",
+    "exposure": "$2k–$20k",
     "severity": 4,
     "likelihood": 2,
     "summary": "Failure to maintain a registered agent can result in missed legal notices and loss of good standing.",
@@ -953,7 +992,7 @@
     ],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 No Active RA",
+        "label": "High Risk — No Active RA",
         "pseudoFunction": "IF(registered_agent_status == 'resigned' OR registered_agent_status == 'lapsed')",
         "humanReadable": "No active registered agent on file.",
         "nextBestAction": "Designate Registered Agent",
@@ -963,7 +1002,7 @@
         ]
       },
       "yellow": {
-        "label": "Monitor \u2014 RA Expiring",
+        "label": "Monitor — RA Expiring",
         "pseudoFunction": "IF(registered_agent_expiry_days <= 30)",
         "humanReadable": "Registered agent subscription expiring within 30 days.",
         "nextBestAction": "Renew Registered Agent",
@@ -973,7 +1012,7 @@
         ]
       },
       "green": {
-        "label": "Low Risk \u2014 Active",
+        "label": "Low Risk — Active",
         "pseudoFunction": "registered_agent_status == 'active' AND registered_agent_expiry_days > 30",
         "humanReadable": "Active registered agent with no expiration concerns.",
         "dataPointsUsed": [
@@ -1059,7 +1098,7 @@
     "status": "in_definition",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$500k+",
+    "exposure": "$25k–$500k+",
     "severity": 5,
     "likelihood": 3,
     "summary": "Undocumented or unequal equity splits lead to founder disputes and cap table chaos.",
@@ -1162,7 +1201,7 @@
     "status": "in_definition",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$50k\u2013$1M+",
+    "exposure": "$50k–$1M+",
     "severity": 5,
     "likelihood": 2,
     "summary": "Commingling funds or ignoring corporate formalities can expose personal assets.",
@@ -1264,7 +1303,7 @@
     "status": "in_definition",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$15k",
+    "exposure": "$2k–$15k",
     "severity": 3,
     "likelihood": 3,
     "summary": "Operating in a state without proper foreign qualification creates fines and back-tax exposure.",
@@ -1367,7 +1406,7 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$100k+",
+    "exposure": "$10k–$100k+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Misclassifying employees as contractors creates IRS and labor law exposure.",
@@ -1394,7 +1433,7 @@
       "red": {
         "label": "High Risk",
         "pseudoFunction": "IF(contractor_to_employee_ratio > 0.7 AND avg_contractor_tenure_months > 12)",
-        "humanReadable": "High contractor ratio with long tenures \u2014 probable misclassification.",
+        "humanReadable": "High contractor ratio with long tenures — probable misclassification.",
         "nextBestAction": "HR & Legal Review",
         "dataPointsUsed": [
           "contractor_count",
@@ -1471,7 +1510,7 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$0\u2013$500k+",
+    "exposure": "$0–$500k+",
     "severity": 5,
     "likelihood": 3,
     "summary": "Cash flow gaps or insolvency signals may indicate an entity at risk of dissolution.",
@@ -1575,7 +1614,7 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$1k\u2013$10k",
+    "exposure": "$1k–$10k",
     "severity": 2,
     "likelihood": 4,
     "summary": "Entities with no activity may still have filing obligations or outstanding liabilities.",
@@ -1614,7 +1653,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "IF(last_activity_months > 12 AND dissolution_filed == false)",
-        "humanReadable": "No activity in over a year \u2014 may be dormant.",
+        "humanReadable": "No activity in over a year — may be dormant.",
         "nextBestAction": "Review Entity Status",
         "dataPointsUsed": [
           "last_activity_date",
@@ -1679,14 +1718,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$500k+",
+    "exposure": "$10k–$500k+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Unclear IP ownership between founders, employees, or contractors creates ownership disputes and valuation risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "IP created by founders or contractors has not been formally assigned to the entity.",
         "nextBestAction": "Assign IP Ownership",
@@ -1695,7 +1734,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "IP ownership is informal or unclear \u2014 assignment agreements may be missing.",
+        "humanReadable": "IP ownership is informal or unclear — assignment agreements may be missing.",
         "nextBestAction": "Audit IP Ownership",
         "dataPointsUsed": []
       },
@@ -1755,14 +1794,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$100k+",
+    "exposure": "$5k–$100k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Business assets held in personal names or without clear title create liability and transfer complications.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Key business assets are held in personal names rather than the entity.",
         "nextBestAction": "Transfer Assets to Entity",
@@ -1771,7 +1810,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Some assets may be improperly titled \u2014 review needed.",
+        "humanReadable": "Some assets may be improperly titled — review needed.",
         "nextBestAction": "Review Asset Titles",
         "dataPointsUsed": []
       },
@@ -1831,14 +1870,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$1M+",
+    "exposure": "$25k–$1M+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Founders who personally guarantee business debt expose personal assets if the business defaults.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Founder has unlimited personal guarantees on business obligations.",
         "nextBestAction": "Review & Limit Guarantees",
@@ -1847,7 +1886,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Founder has personal guarantees \u2014 monitoring for exposure.",
+        "humanReadable": "Founder has personal guarantees — monitoring for exposure.",
         "nextBestAction": "Monitor Guarantee Exposure",
         "dataPointsUsed": []
       },
@@ -1907,14 +1946,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$25k",
+    "exposure": "$2k–$25k",
     "severity": 3,
     "likelihood": 3,
     "summary": "Failure to formally dissolve an entity leaves ongoing obligations and personal liability.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Entity is being wound down without formal dissolution filing.",
         "nextBestAction": "File Formal Dissolution",
@@ -1983,14 +2022,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$250k+",
+    "exposure": "$5k–$250k+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Collecting or remitting sales tax incorrectly creates back-tax, penalties, and audit risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business is collecting or failing to collect/remit sales tax incorrectly.",
         "nextBestAction": "Engage Tax Professional",
@@ -1999,7 +2038,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Sales tax nexus may have changed \u2014 review required.",
+        "humanReadable": "Sales tax nexus may have changed — review required.",
         "nextBestAction": "Audit Sales Tax Obligations",
         "dataPointsUsed": []
       },
@@ -2059,14 +2098,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$50k+",
+    "exposure": "$2k–$50k+",
     "severity": 3,
     "likelihood": 4,
     "summary": "Failure to make estimated tax payments leads to IRS penalties and unexpected tax bills.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Insufficient estimated tax payments have been made for the current year.",
         "nextBestAction": "Consult Tax Professional",
@@ -2135,14 +2174,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$100k+",
+    "exposure": "$5k–$100k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Improper founder compensation (draws vs. salary) can trigger IRS scrutiny and payroll tax issues.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "S-Corp owner is not paying a reasonable salary, or compensation is improperly structured.",
         "nextBestAction": "Set Reasonable Compensation",
@@ -2211,14 +2250,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$100k+",
+    "exposure": "$5k–$100k+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Payroll tax deposit failures and miscalculations lead to IRS trust fund penalties.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Payroll taxes are not being deposited correctly or on time.",
         "nextBestAction": "Correct Payroll Immediately",
@@ -2287,14 +2326,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$500k+",
+    "exposure": "$5k–$500k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Growing or stale accounts receivable can signal cash flow problems and collection risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Significant overdue receivables with no collection plan in place.",
         "nextBestAction": "Escalate Collections",
@@ -2363,14 +2402,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$250k+",
+    "exposure": "$5k–$250k+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Failure to properly withhold and remit employment taxes creates IRS trust fund penalties.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Employment taxes (FICA, FUTA) not properly withheld or remitted.",
         "nextBestAction": "Correct Tax Deposits Immediately",
@@ -2439,14 +2478,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$1M+",
+    "exposure": "$10k–$1M+",
     "severity": 5,
     "likelihood": 3,
     "summary": "Insufficient liquid assets to cover near-term obligations creates operational and solvency risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business has less than 30 days of operating runway.",
         "nextBestAction": "Emergency Capital Review",
@@ -2455,7 +2494,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Cash runway is less than 90 days \u2014 monitoring required.",
+        "humanReadable": "Cash runway is less than 90 days — monitoring required.",
         "nextBestAction": "Monitor Cash Position",
         "dataPointsUsed": []
       },
@@ -2515,14 +2554,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$1M+",
+    "exposure": "$25k–$1M+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Excessive debt relative to assets or revenue creates covenant risk and limits future financing options.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Debt-to-equity or debt service coverage ratios exceed safe thresholds.",
         "nextBestAction": "Debt Restructuring Review",
@@ -2591,14 +2630,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$50k\u2013$5M+",
+    "exposure": "$50k–$5M+",
     "severity": 5,
     "likelihood": 2,
     "summary": "Violating loan covenants can trigger immediate repayment demands and damage lender relationships.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "One or more loan covenants have been breached.",
         "nextBestAction": "Engage Lender Immediately",
@@ -2674,7 +2713,7 @@
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business credit score is poor or no business credit profile exists.",
         "nextBestAction": "Credit Building Plan",
@@ -2750,7 +2789,7 @@
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business has been denied financing or has no established credit facilities.",
         "nextBestAction": "Explore Alternative Financing",
@@ -2759,7 +2798,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Access to financing is limited \u2014 proactive relationship building needed.",
+        "humanReadable": "Access to financing is limited — proactive relationship building needed.",
         "nextBestAction": "Maintain Banking Relationships",
         "dataPointsUsed": []
       },
@@ -2819,14 +2858,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$2M+",
+    "exposure": "$25k–$2M+",
     "severity": 4,
     "likelihood": 3,
     "summary": "As the business grows, personal guarantees on business obligations can create outsized personal risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Personal guarantees significantly exceed business assets or ability to repay.",
         "nextBestAction": "Review & Renegotiate Guarantees",
@@ -2895,14 +2934,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$500k+",
+    "exposure": "$10k–$500k+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Failure to pay minimum wage, overtime, or correct final pay creates significant legal exposure.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Pay practices do not comply with FLSA or state wage and hour laws.",
         "nextBestAction": "HR & Legal Audit",
@@ -2971,14 +3010,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$200k+",
+    "exposure": "$5k–$200k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Non-compliant hiring practices (background checks, offer letters, EEO) create discrimination claims.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Hiring practices have material compliance gaps or discrimination risk.",
         "nextBestAction": "Legal Review of Hiring Process",
@@ -3047,14 +3086,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$500k+",
+    "exposure": "$10k–$500k+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Improperly documented terminations and retaliation claims create significant employment law exposure.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Recent termination(s) lack proper documentation or show retaliation risk factors.",
         "nextBestAction": "HR & Legal Review",
@@ -3123,14 +3162,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$100k+",
+    "exposure": "$5k–$100k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Missing or outdated employee handbook and policies create legal exposure and inconsistent enforcement.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "No employee handbook exists or policies are significantly outdated.",
         "nextBestAction": "Update Employee Handbook",
@@ -3199,14 +3238,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$1M+",
+    "exposure": "$10k–$1M+",
     "severity": 5,
     "likelihood": 2,
     "summary": "Operating without required workers' compensation insurance is illegal in most states.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business lacks required workers' compensation coverage.",
         "nextBestAction": "Obtain Workers' Comp Coverage Immediately",
@@ -3275,14 +3314,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$200k+",
+    "exposure": "$5k–$200k+",
     "severity": 3,
     "likelihood": 4,
     "summary": "Missing NDAs, IP assignments, and offer letters create disputes and exposure.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Key employees or contractors lack signed agreements (NDA, IP assignment, offer letter).",
         "nextBestAction": "Audit & Execute Missing Agreements",
@@ -3351,14 +3390,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$250k+",
+    "exposure": "$5k–$250k+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Failure to register and enforce trademarks leaves brand vulnerable to infringement and dilution.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Core trademarks are not registered or registration has lapsed.",
         "nextBestAction": "File Trademark Application",
@@ -3427,14 +3466,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$10M+",
+    "exposure": "$25k–$10M+",
     "severity": 5,
     "likelihood": 2,
     "summary": "Inadequate protection of trade secrets risks competitive advantage and legal recourse.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Trade secrets are not adequately protected or NDAs are missing.",
         "nextBestAction": "Implement Trade Secret Protections",
@@ -3503,14 +3542,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$1M+",
+    "exposure": "$10k–$1M+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Violations of CCPA, GDPR, or other privacy regulations create regulatory fines and reputational damage.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business is not compliant with applicable data privacy laws.",
         "nextBestAction": "Privacy Compliance Audit",
@@ -3579,14 +3618,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$500k+",
+    "exposure": "$5k–$500k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "False or misleading advertising claims create FTC liability and competitor litigation risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Advertising contains unsubstantiated or potentially false claims.",
         "nextBestAction": "Legal Review of Marketing Materials",
@@ -3655,14 +3694,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$150k+",
+    "exposure": "$5k–$150k+",
     "severity": 3,
     "likelihood": 2,
     "summary": "Unregistered copyrights limit remedies and allow competitors to freely copy original work.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Key original works are not copyright-registered, limiting legal remedies.",
         "nextBestAction": "Register Key Copyrights",
@@ -3731,14 +3770,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$1M+",
+    "exposure": "$10k–$1M+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Operating without complete customer agreements creates payment, liability, and IP disputes.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Significant revenue is generated without proper customer contracts.",
         "nextBestAction": "Implement Standard Customer Agreements",
@@ -3807,14 +3846,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$500k+",
+    "exposure": "$5k–$500k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Expired or auto-renewing vendor contracts create unexpected obligations and missed renegotiation windows.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Key vendor contracts have expired or are auto-renewing without review.",
         "nextBestAction": "Audit Vendor Contracts",
@@ -3883,14 +3922,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$5M+",
+    "exposure": "$25k–$5M+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Over-reliance on a single platform (Amazon, Google, Shopify) creates concentration risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business is critically dependent on a single platform that could de-platform or change terms.",
         "nextBestAction": "Diversify Revenue Channels",
@@ -3899,7 +3938,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Significant revenue concentration in one platform \u2014 diversification needed.",
+        "humanReadable": "Significant revenue concentration in one platform — diversification needed.",
         "nextBestAction": "Monitor Platform Concentration",
         "dataPointsUsed": []
       },
@@ -3959,14 +3998,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$500k+",
+    "exposure": "$10k–$500k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Unfavorable lease terms, personal guarantees, or missed renewal windows create occupancy risk.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Commercial lease has unfavorable terms, is expiring, or has personal guarantee exposure.",
         "nextBestAction": "Legal Review of Lease Terms",
@@ -3975,7 +4014,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Commercial lease renewal window approaching \u2014 review needed.",
+        "humanReadable": "Commercial lease renewal window approaching — review needed.",
         "nextBestAction": "Track Lease Renewal Dates",
         "dataPointsUsed": []
       },
@@ -4035,14 +4074,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$50k+",
+    "exposure": "$2k–$50k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Storing inventory in another state may create sales tax nexus and registration requirements.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Inventory stored in another state creating unacknowledged tax nexus.",
         "nextBestAction": "Assess Nexus Obligations",
@@ -4111,14 +4150,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$2k\u2013$50k+",
+    "exposure": "$2k–$50k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Third-party logistics and warehouse relationships can create tax nexus in states where you don't operate.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "3PL or warehouse agreements creating unrecognized tax nexus.",
         "nextBestAction": "Assess 3PL Nexus",
@@ -4187,14 +4226,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$100k+",
+    "exposure": "$5k–$100k+",
     "severity": 3,
     "likelihood": 3,
     "summary": "Employees, offices, or operations in additional states create registration, tax, and compliance obligations.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Physical presence in states without proper registration or compliance.",
         "nextBestAction": "Register in All Active States",
@@ -4263,14 +4302,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$1M+",
+    "exposure": "$10k–$1M+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Over-reliance on a single supplier creates supply chain risk that can halt operations.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Critical operations depend on a single vendor with no backup.",
         "nextBestAction": "Diversify Vendor Base",
@@ -4279,7 +4318,7 @@
       "yellow": {
         "label": "Monitor",
         "pseudoFunction": "TBD",
-        "humanReadable": "Vendor concentration is elevated \u2014 contingency planning needed.",
+        "humanReadable": "Vendor concentration is elevated — contingency planning needed.",
         "nextBestAction": "Monitor Vendor Concentration",
         "dataPointsUsed": []
       },
@@ -4339,14 +4378,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$5M+",
+    "exposure": "$25k–$5M+",
     "severity": 5,
     "likelihood": 3,
     "summary": "Operating without adequate general liability insurance exposes the business to catastrophic loss from claims.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "No general liability coverage or coverage is significantly insufficient.",
         "nextBestAction": "Obtain General Liability Coverage",
@@ -4415,14 +4454,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$1M+",
+    "exposure": "$25k–$1M+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Employment Practices Liability Insurance (EPLI) protects against wrongful termination and discrimination claims.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "No EPLI coverage in place despite having employees.",
         "nextBestAction": "Obtain EPLI Coverage",
@@ -4491,16 +4530,16 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$10M+",
+    "exposure": "$25k–$10M+",
     "severity": 4,
     "likelihood": 4,
     "summary": "Data breaches and ransomware attacks without cyber insurance create uninsured catastrophic losses.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
-        "humanReadable": "No cyber insurance in place \u2014 significant exposure to ransomware and data breach costs.",
+        "humanReadable": "No cyber insurance in place — significant exposure to ransomware and data breach costs.",
         "nextBestAction": "Obtain Cyber Insurance",
         "dataPointsUsed": []
       },
@@ -4567,14 +4606,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$2M+",
+    "exposure": "$25k–$2M+",
     "severity": 4,
     "likelihood": 3,
     "summary": "Errors & Omissions insurance protects service businesses from client claims of professional mistakes.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "No professional liability coverage for service-based business activities.",
         "nextBestAction": "Obtain E&O Coverage",
@@ -4643,16 +4682,16 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$5M+",
+    "exposure": "$25k–$5M+",
     "severity": 4,
     "likelihood": 2,
     "summary": "D&O insurance protects directors and officers from personal liability for business decisions.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
-        "humanReadable": "No D&O coverage \u2014 directors and officers exposed to personal liability.",
+        "humanReadable": "No D&O coverage — directors and officers exposed to personal liability.",
         "nextBestAction": "Obtain D&O Coverage",
         "dataPointsUsed": []
       },
@@ -4719,14 +4758,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$10k\u2013$2M+",
+    "exposure": "$10k–$2M+",
     "severity": 4,
     "likelihood": 2,
     "summary": "Property and equipment losses without insurance can be catastrophic for asset-heavy businesses.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "Business property is uninsured or significantly underinsured.",
         "nextBestAction": "Obtain Property Coverage",
@@ -4795,16 +4834,16 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$5M+",
+    "exposure": "$25k–$5M+",
     "severity": 4,
     "likelihood": 2,
-    "summary": "Business interruption insurance covers lost revenue during forced closures \u2014 often overlooked until needed.",
+    "summary": "Business interruption insurance covers lost revenue during forced closures — often overlooked until needed.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
-        "humanReadable": "No business interruption coverage \u2014 forced closure would mean zero revenue.",
+        "humanReadable": "No business interruption coverage — forced closure would mean zero revenue.",
         "nextBestAction": "Add Business Interruption Coverage",
         "dataPointsUsed": []
       },
@@ -4871,14 +4910,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$10M+",
+    "exposure": "$25k–$10M+",
     "severity": 5,
     "likelihood": 2,
     "summary": "Product-based businesses without product liability insurance face catastrophic exposure from injury claims.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "No product liability coverage for physical products sold to customers.",
         "nextBestAction": "Obtain Product Liability Coverage",
@@ -4947,16 +4986,16 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$5k\u2013$500k+",
+    "exposure": "$5k–$500k+",
     "severity": 3,
     "likelihood": 2,
-    "summary": "Fidelity bonds protect against employee theft and fraud \u2014 often required by clients or contracts.",
+    "summary": "Fidelity bonds protect against employee theft and fraud — often required by clients or contracts.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
-        "humanReadable": "No fidelity bond in place \u2014 exposure to employee theft and fraud losses.",
+        "humanReadable": "No fidelity bond in place — exposure to employee theft and fraud losses.",
         "nextBestAction": "Obtain Fidelity Bond",
         "dataPointsUsed": []
       },
@@ -5023,14 +5062,14 @@
     "status": "backlog",
     "riskScore": null,
     "confidence": null,
-    "exposure": "$25k\u2013$2M+",
+    "exposure": "$25k–$2M+",
     "severity": 5,
     "likelihood": 2,
     "summary": "Loss of a founder or key employee without key person insurance can threaten business survival.",
     "scenarios": [],
     "logic": {
       "red": {
-        "label": "High Risk \u2014 Action Required",
+        "label": "High Risk — Action Required",
         "pseudoFunction": "TBD",
         "humanReadable": "No key person insurance on founder(s) or critical employees.",
         "nextBestAction": "Obtain Key Person Coverage",

@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 
 function SectionLabel({ children }) {
   return (
-    <div style={{ fontSize: 11, fontWeight: 700, color: '#94A3B8', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 16 }}>
+    <div style={{ fontSize: 13, fontWeight: 700, color: '#475569', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, marginTop: 16 }}>
       {children}
     </div>
   )
@@ -62,10 +62,10 @@ function EditableField({ text, multiline, onSave, displayStyle, emptyLabel = 'Cl
       }}
     >
       <span style={displayStyle}>
-        {text || <span style={{ color: '#CBD5E1', fontStyle: 'italic' }}>{emptyLabel}</span>}
+        {text || <span style={{ color: '#64748B', fontStyle: 'italic' }}>{emptyLabel}</span>}
       </span>
       {hovering && (
-        <span style={{ position: 'absolute', top: 4, right: 5, fontSize: 9, color: '#3B82F6', opacity: 0.65, pointerEvents: 'none' }}>
+        <span style={{ position: 'absolute', top: 4, right: 5, fontSize: 13, color: '#3B82F6', opacity: 0.65, pointerEvents: 'none' }}>
           ✏
         </span>
       )}
@@ -139,7 +139,7 @@ export default function DefinitionPanel({ risk, onSave }) {
         text={description}
         multiline
         onSave={saveDescription}
-        displayStyle={{ fontSize: 13.5, color: '#374151', lineHeight: 1.65, display: 'block' }}
+        displayStyle={{ fontSize: 15.5, color: '#374151', lineHeight: 1.65, display: 'block' }}
       />
 
       <SectionLabel>Impact</SectionLabel>
@@ -148,7 +148,7 @@ export default function DefinitionPanel({ risk, onSave }) {
         multiline
         onSave={saveImpact}
         emptyLabel="Click to add impact"
-        displayStyle={{ fontSize: 13, color: '#64748B', lineHeight: 1.6, display: 'block' }}
+        displayStyle={{ fontSize: 15, color: '#475569', lineHeight: 1.6, display: 'block' }}
       />
 
       <SectionLabel>Exposure</SectionLabel>
@@ -156,7 +156,7 @@ export default function DefinitionPanel({ risk, onSave }) {
         text={risk.exposure || ''}
         onSave={v => saveTopLevel('exposure', v)}
         emptyLabel="e.g. $5k–$50k+"
-        displayStyle={{ fontSize: 15, fontWeight: 700, color: '#DC2626', display: 'block' }}
+        displayStyle={{ fontSize: 17, fontWeight: 700, color: '#DC2626', display: 'block' }}
       />
 
       <SectionLabel>Severity</SectionLabel>
@@ -165,7 +165,7 @@ export default function DefinitionPanel({ risk, onSave }) {
         color="#EF4444"
         onClickSegment={v => saveTopLevel('severity', v)}
       />
-      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 3 }}>{risk.severity ?? 0}/5</div>
+      <div style={{ fontSize: 13, color: '#475569', marginTop: 3 }}>{risk.severity ?? 0}/5</div>
 
       <SectionLabel>Likelihood</SectionLabel>
       <ScaleBar
@@ -173,7 +173,7 @@ export default function DefinitionPanel({ risk, onSave }) {
         color="#F59E0B"
         onClickSegment={v => saveTopLevel('likelihood', v)}
       />
-      <div style={{ fontSize: 10, color: '#94A3B8', marginTop: 3 }}>{risk.likelihood ?? 0}/5</div>
+      <div style={{ fontSize: 13, color: '#475569', marginTop: 3 }}>{risk.likelihood ?? 0}/5</div>
 
       <SectionLabel>Collaborators</SectionLabel>
       {[
@@ -184,15 +184,15 @@ export default function DefinitionPanel({ risk, onSave }) {
         <div key={role} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 7 }}>
           <div style={{
             width: 26, height: 26, borderRadius: '50%', background: color,
-            color: '#fff', fontSize: 9.5, fontWeight: 700,
+            color: '#fff', fontSize: 13, fontWeight: 700,
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0
           }}>
             {getInitials(dri?.name)}
           </div>
           <div>
-            <div style={{ fontSize: 10, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{role}</div>
-            <div style={{ fontSize: 13, color: '#374151', fontWeight: 600 }}>{dri?.name || 'TBD'}</div>
+            <div style={{ fontSize: 13, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.06em' }}>{role}</div>
+            <div style={{ fontSize: 15, color: '#374151', fontWeight: 600 }}>{dri?.name || 'TBD'}</div>
           </div>
         </div>
       ))}
