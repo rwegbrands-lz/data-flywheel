@@ -88,7 +88,7 @@ function DataTab({ risk }) {
 
   return (
     <div>
-      <SectionLabel style={{ marginTop: 8 }}>Required Data Points</SectionLabel>
+      <SectionLabel style={{ marginTop: 0 }}>Required Data Points</SectionLabel>
       <div style={{ border: '1px solid #E2E8F0', borderRadius: 10, overflow: 'hidden' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13, fontFamily: FONT }}>
           <thead>
@@ -242,7 +242,7 @@ function LogicTab({ risk }) {
 
   return (
     <div>
-      <SectionLabel style={{ marginTop: 8 }}>Logic Status</SectionLabel>
+      <SectionLabel style={{ marginTop: 0 }}>Logic Status</SectionLabel>
       <LogicStatusStepper currentStatus={logicStatus} />
 
       <SectionLabel>Impact Range</SectionLabel>
@@ -307,7 +307,7 @@ function ConsumeTab({ risk }) {
 
   return (
     <div>
-      <SectionLabel style={{ marginTop: 8 }}>Surfaces</SectionLabel>
+      <SectionLabel style={{ marginTop: 0 }}>Surfaces</SectionLabel>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {surfaces.map((s, i) => {
           const meta = SURFACE_META[s.surface] || { label: s.surface, icon: '📄', description: '' }
@@ -336,6 +336,20 @@ function ConsumeTab({ risk }) {
             </div>
           )
         })}
+      </div>
+    </div>
+  )
+}
+
+// ─── Usage Tab ───────────────────────────────────────────────────────────────
+
+function UsageTab() {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '60px 0 40px', textAlign: 'center' }}>
+      <div style={{ fontSize: 36, marginBottom: 16 }}>📊</div>
+      <div style={{ fontSize: 14, fontWeight: 700, color: '#374151', fontFamily: FONT }}>Customer usage indicators coming soon</div>
+      <div style={{ fontSize: 13, color: '#94A3B8', marginTop: 8, maxWidth: 340, lineHeight: 1.65, fontFamily: FONT }}>
+        This section will surface how customers engage with risk signals — views, actions taken, and downstream outcomes.
       </div>
     </div>
   )
@@ -373,7 +387,7 @@ function HistoryTab({ risk, updateRisk }) {
   return (
     <div>
       {/* Add note form */}
-      <SectionLabel style={{ marginTop: 8 }}>Add Note</SectionLabel>
+      <SectionLabel style={{ marginTop: 0 }}>Add Note</SectionLabel>
       <div style={{ background: '#F8FAFC', borderRadius: 10, padding: '14px', border: '1px solid #E2E8F0', marginBottom: 24 }}>
         <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
           <input
@@ -472,6 +486,7 @@ const TABS = [
   { id: 'ingest',  label: 'Ingest' },
   { id: 'reason',  label: 'Reason' },
   { id: 'consume', label: 'Consume' },
+  { id: 'usage',   label: 'Usage' },
   { id: 'history', label: 'History' },
 ]
 
@@ -522,10 +537,11 @@ export default function SectionTabs({ risk, updateRisk, activeSection, onSection
       </div>
 
       {/* Tab content */}
-      <div style={{ padding: '0 28px 60px 28px' }}>
+      <div style={{ padding: '20px 28px 60px 28px' }}>
         {activeTab === 'ingest'  && <DataTab risk={risk} />}
         {activeTab === 'reason'  && <LogicTab risk={risk} />}
         {activeTab === 'consume' && <ConsumeTab risk={risk} />}
+        {activeTab === 'usage'   && <UsageTab />}
         {activeTab === 'history' && <HistoryTab risk={risk} updateRisk={updateRisk} />}
       </div>
     </div>

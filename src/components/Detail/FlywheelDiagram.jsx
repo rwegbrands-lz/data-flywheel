@@ -2,9 +2,10 @@ const STAGE_COLORS = { complete: '#10B981', in_progress: '#F59E0B', not_started:
 const SCORE_COLORS = { green: '#10B981', yellow: '#F59E0B', red: '#EF4444' }
 
 const SECTIONS = [
-  { id: 'ingest',  label: 'Ingest',  start: -60, end: 60   },
-  { id: 'consume', label: 'Consume', start: 60,  end: 180  },
-  { id: 'reason',  label: 'Reason',  start: 180, end: 300  },
+  { id: 'ingest',  label: 'Ingest',  start: -45, end: 45  },
+  { id: 'usage',   label: 'Usage',   start: 45,  end: 135 },
+  { id: 'consume', label: 'Consume', start: 135, end: 225 },
+  { id: 'reason',  label: 'Reason',  start: 225, end: 315 },
 ]
 
 function getSectionStatus(risk, id) {
@@ -17,6 +18,7 @@ function getSectionStatus(risk, id) {
   }
   if (id === 'reason') return fw.customerIntelligence?.status || 'not_started'
   if (id === 'consume') return fw.presentation?.status || 'not_started'
+  if (id === 'usage') return 'not_started'
   return 'not_started'
 }
 
@@ -42,7 +44,7 @@ export default function FlywheelDiagram({ risk, activeSection, onSectionClick })
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-      <svg width="100%" viewBox="0 0 300 300" style={{ maxWidth: 240, display: 'block', margin: '0 auto', overflow: 'visible' }}>
+      <svg width="100%" viewBox="-15 -15 330 330" style={{ maxWidth: 260, display: 'block', margin: '0 auto', overflow: 'visible' }}>
         {SECTIONS.map(sec => {
           const status = getSectionStatus(risk, sec.id)
           const isActive = activeSection === sec.id
