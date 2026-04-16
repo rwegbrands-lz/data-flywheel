@@ -1,0 +1,5094 @@
+[
+  {
+    "id": "annual_filings_good_standing",
+    "name": "Annual Filings & Good Standing",
+    "category": "bc",
+    "priority": "P0",
+    "status": "live",
+    "riskScore": "green",
+    "confidence": 0.94,
+    "exposure": "$5k\u2013$50k+",
+    "severity": 3,
+    "likelihood": 5,
+    "summary": "Loss of good standing leads to fines or blocked deals.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Good Standing & Annual Report Compliance",
+        "description": {
+          "risk": "Failure to file required annual reports may result in loss of good standing or administrative dissolution.",
+          "impact": "The entity's legal powers may be suspended, limiting ability to enforce contracts, access banking services, or transact. Reinstatement requires fees and penalties."
+        },
+        "triggers": [
+          {
+            "trigger": "Anniversary date approaching",
+            "dataSignal": "Entity status, filing dates",
+            "sources": [
+              "LegalZoom Compliance",
+              "Secretary of State"
+            ]
+          },
+          {
+            "trigger": "State notices ignored",
+            "dataSignal": "Entity status, filing dates",
+            "sources": [
+              "LegalZoom Compliance",
+              "Secretary of State"
+            ]
+          },
+          {
+            "trigger": "BOI filing incomplete",
+            "dataSignal": "Government/compliance status",
+            "sources": [
+              "LegalZoom Compliance",
+              "Secretary of State",
+              "FinCEN"
+            ]
+          },
+          {
+            "trigger": "Entity status inactive",
+            "dataSignal": "Entity status, filing dates",
+            "sources": [
+              "LegalZoom Compliance",
+              "Secretary of State"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "status": "live",
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "IF(\n  (entity_status != 'Active' AND entity_status != 'Good Standing')\n  OR\n  (\n    (annual_report_due_date < today)\n    AND (annual_report_status != 'complete')\n  )\n)",
+        "humanReadable": "Entity is NOT in good standing, OR annual report is past due and not filed.",
+        "nextBestAction": "Reinstatement",
+        "dataPointsUsed": [
+          "entity_status",
+          "annual_report_due_date",
+          "annual_report_status"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor \u2014 Due Soon",
+        "pseudoFunction": "IF(\n  entity_status == 'Active'\n  AND (annual_report_due_date - today) <= 45\n  AND (annual_report_due_date - today) > 0\n  AND compliance_filing_status_current_year != 'Completed'\n)",
+        "humanReadable": "Entity is in good standing but annual report due within 45 days and not yet filed.",
+        "nextBestAction": "File Annual Report",
+        "dataPointsUsed": [
+          "entity_status",
+          "annual_report_due_date",
+          "compliance_filing_status_current_year"
+        ],
+        "openQuestion": "Sheet uses 'entity_good_standing_status' in yellow logic but stored field is 'entity_status' \u2014 confirm these map to the same field."
+      },
+      "green": {
+        "label": "Low Risk \u2014 Compliant",
+        "pseudoFunction": "entity_status IN ['Active', 'Good Standing']\nAND (annual_report_due_date - today) > 45\nAND annual_report_status == 'complete'",
+        "humanReadable": "Entity is in good standing and annual report is filed and not due within 45 days.",
+        "dataPointsUsed": [
+          "entity_status",
+          "annual_report_due_date",
+          "annual_report_status"
+        ]
+      }
+    },
+    "dataPoints": [
+      {
+        "field": "entity_status",
+        "displayName": "Entity Status",
+        "description": "Current legal status of the entity with the state of formation (e.g., Active, Not in Good Standing, Dissolved).",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Available",
+          "notes": "BP data. Primary source of truth for entity status.",
+          "gap": null
+        },
+        "flywheelStage": "businessProfile"
+      },
+      {
+        "field": "annual_report_due_date",
+        "displayName": "Annual Report Due Date",
+        "description": "The date by which the current year's annual report must be filed with the state.",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB + Compliance Intelligence",
+          "display": "Internal: BP/DB",
+          "availability": "Available",
+          "notes": "BP data + Compliance Intelligence layer.",
+          "gap": null
+        },
+        "flywheelStage": "businessProfile"
+      },
+      {
+        "field": "annual_report_status",
+        "displayName": "Annual Report Status",
+        "description": "Whether the annual report for the current filing year has been completed.",
+        "usedInLogic": [
+          "red",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Partial",
+          "notes": "BP data captures LZ-filed reports. Need SOS scrape for reports filed outside LZ.",
+          "gap": "Customers who file their annual report themselves or through a third party may show as 'not filed' unless SOS scrape is active."
+        },
+        "flywheelStage": "businessProfile"
+      },
+      {
+        "field": "compliance_filing_status_current_year",
+        "displayName": "Compliance Filing Status (Current Year)",
+        "description": "Derived field indicating whether the compliance obligation for the current year has been fulfilled.",
+        "usedInLogic": [
+          "yellow"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "Compliance Intelligence",
+          "display": "Internal: Compliance Intelligence",
+          "availability": "Available",
+          "notes": "Derived by Compliance Intelligence layer.",
+          "gap": null
+        },
+        "flywheelStage": "customerIntelligence"
+      }
+    ],
+    "flywheel": {
+      "ingestion": {
+        "status": "complete",
+        "sources": [
+          {
+            "name": "Internal: BP/DB",
+            "type": "Internal"
+          },
+          {
+            "name": "LegalZoom Compliance",
+            "type": "Internal"
+          },
+          {
+            "name": "Secretary of State",
+            "type": "External"
+          }
+        ]
+      },
+      "businessProfile": {
+        "status": "complete",
+        "fields": [
+          "entity_status",
+          "annual_report_due_date",
+          "annual_report_status",
+          "compliance_filing_status_current_year"
+        ]
+      },
+      "customerIntelligence": {
+        "status": "complete",
+        "riskFunction": {
+          "name": "annual_filings_good_standing_v1"
+        }
+      },
+      "presentation": {
+        "status": "complete",
+        "outputFormat": {
+          "red": {
+            "headline": "Your entity is not in good standing",
+            "cta": "Start Reinstatement"
+          },
+          "yellow": {
+            "headline": "Annual report due soon",
+            "cta": "File Annual Report"
+          },
+          "green": {
+            "headline": "Annual filings are current",
+            "cta": null
+          }
+        }
+      }
+    },
+    "verifiableOutcomes": [
+      {
+        "outcome": "Entity in good standing",
+        "measurementField": "entity_status",
+        "verificationSource": "SOS scrape + BP/DB"
+      },
+      {
+        "outcome": "Annual report filed and current",
+        "measurementField": "annual_report_status",
+        "verificationSource": "BP/DB + SOS scrape"
+      }
+    ],
+    "qualityAssurance": {
+      "currentScore": "green",
+      "currentConfidence": 0.94,
+      "openFlags": [
+        {
+          "flag": "annual_report_status gap",
+          "detail": "Customers who file their own annual reports may show as 'not filed' if SOS scrape is delayed.",
+          "owner": "Engineering",
+          "severity": "medium"
+        },
+        {
+          "flag": "entity_good_standing_status field name mismatch",
+          "detail": "YELLOW logic references 'entity_good_standing_status' but stored field is 'entity_status'. Confirm these map to the same field.",
+          "owner": "Product + Engineering",
+          "severity": "low"
+        }
+      ]
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "consume": {
+      "surfaces": [
+        { "surface": "MyLZ", "note": "Displayed in the Risk Dashboard card and risk detail view. Red/Yellow states trigger action prompts.", "status": "live" },
+        { "surface": "Salesforce", "note": "Surfaced as a risk signal on the Account and Opportunity pages for agent outreach context.", "status": "in_progress" },
+        { "surface": "LCM", "note": "", "status": "identified" }
+      ]
+    },
+    "notes": [
+      {
+        "author": "Kari McGlynn",
+        "role": "Legal",
+        "date": "2026-04-14",
+        "text": "SOS scrape confirmed active for CA, TX, FL, NY. Remaining states in Q2 backlog."
+      }
+    ]
+  },
+  {
+    "id": "operating_agreement_gaps",
+    "name": "Operating Agreement Gaps",
+    "category": "bso",
+    "priority": "P0",
+    "status": "live",
+    "riskScore": "yellow",
+    "confidence": 0.82,
+    "exposure": "$10k\u2013$100k+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Missing or outdated operating agreement creates ownership disputes and personal liability exposure.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Missing Operating Agreement",
+        "description": {
+          "risk": "Entity has no operating agreement or one that predates major ownership/capital events.",
+          "impact": "Disputes over profit distribution, decision-making authority, or buyout rights may require costly litigation to resolve."
+        },
+        "triggers": [
+          {
+            "trigger": "No operating agreement on file",
+            "dataSignal": "Document inventory",
+            "sources": [
+              "LegalZoom BP/DB"
+            ]
+          },
+          {
+            "trigger": "New member added without amendment",
+            "dataSignal": "Member change events",
+            "sources": [
+              "LegalZoom BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "IF(operating_agreement_exists == false OR operating_agreement_date < entity_last_major_change_date)",
+        "humanReadable": "No operating agreement exists, or existing one predates a major ownership change.",
+        "nextBestAction": "Create or Update Operating Agreement",
+        "dataPointsUsed": [
+          "operating_agreement_exists",
+          "operating_agreement_date",
+          "entity_last_major_change_date"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor \u2014 Review Recommended",
+        "pseudoFunction": "IF(operating_agreement_age_years > 2 AND no_amendments_since_last_change)",
+        "humanReadable": "Operating agreement exists but is over 2 years old with no recent amendments.",
+        "nextBestAction": "Review and Update Operating Agreement",
+        "dataPointsUsed": [
+          "operating_agreement_date",
+          "amendment_count"
+        ]
+      },
+      "green": {
+        "label": "Low Risk \u2014 Current",
+        "pseudoFunction": "operating_agreement_exists == true AND operating_agreement_age_years <= 2",
+        "humanReadable": "Operating agreement is current and up to date.",
+        "dataPointsUsed": [
+          "operating_agreement_exists",
+          "operating_agreement_date"
+        ]
+      }
+    },
+    "dataPoints": [
+      {
+        "field": "operating_agreement_exists",
+        "displayName": "Operating Agreement on File",
+        "description": "Whether a valid operating agreement exists in the entity's document vault.",
+        "usedInLogic": [
+          "red",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Available",
+          "notes": "Document inventory from BP.",
+          "gap": null
+        },
+        "flywheelStage": "businessProfile"
+      },
+      {
+        "field": "operating_agreement_date",
+        "displayName": "Operating Agreement Date",
+        "description": "Date the operating agreement was last executed or amended.",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Partial",
+          "notes": "Date captured when LZ drafts the OA. Self-uploaded documents may lack date metadata.",
+          "gap": "Date may be missing for self-uploaded OAs."
+        },
+        "flywheelStage": "businessProfile"
+      }
+    ],
+    "flywheel": {
+      "ingestion": {
+        "status": "complete",
+        "sources": [
+          {
+            "name": "Internal: BP/DB",
+            "type": "Internal"
+          }
+        ]
+      },
+      "businessProfile": {
+        "status": "complete",
+        "fields": [
+          "operating_agreement_exists",
+          "operating_agreement_date",
+          "amendment_count"
+        ]
+      },
+      "customerIntelligence": {
+        "status": "complete",
+        "riskFunction": {
+          "name": "operating_agreement_gaps_v1"
+        }
+      },
+      "presentation": {
+        "status": "complete",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": "yellow",
+      "currentConfidence": 0.82,
+      "openFlags": [
+        {
+          "flag": "Self-uploaded OA date gap",
+          "detail": "OAs uploaded by customers may lack execution date metadata, reducing confidence.",
+          "owner": "Engineering",
+          "severity": "medium"
+        }
+      ]
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "business_name_conflict",
+    "name": "Business Name Conflict",
+    "category": "ip",
+    "priority": "P1",
+    "status": "live",
+    "riskScore": "green",
+    "confidence": 0.88,
+    "exposure": "$5k\u2013$25k",
+    "severity": 3,
+    "likelihood": 2,
+    "summary": "Undetected trademark or name conflicts can result in forced rebrand or litigation.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Name Conflict with Existing Trademark",
+        "description": {
+          "risk": "Business is operating under a name that conflicts with an existing federal or state trademark.",
+          "impact": "Cease and desist, forced rebrand, potential damages."
+        },
+        "triggers": [
+          {
+            "trigger": "No trademark search conducted",
+            "dataSignal": "IP status",
+            "sources": [
+              "USPTO",
+              "LegalZoom IP"
+            ]
+          },
+          {
+            "trigger": "Trademark registration lapsed",
+            "dataSignal": "Trademark renewal dates",
+            "sources": [
+              "USPTO"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Conflict Detected",
+        "pseudoFunction": "IF(trademark_conflict_detected == true OR cease_and_desist_received == true)",
+        "humanReadable": "Active conflict or C&D detected.",
+        "nextBestAction": "Consult IP Attorney",
+        "dataPointsUsed": [
+          "trademark_conflict_detected",
+          "cease_and_desist_received"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor \u2014 No Search on File",
+        "pseudoFunction": "IF(trademark_search_completed == false OR trademark_registration_status == 'pending')",
+        "humanReadable": "No trademark search on record or registration still pending.",
+        "nextBestAction": "Complete Trademark Search",
+        "dataPointsUsed": [
+          "trademark_search_completed",
+          "trademark_registration_status"
+        ]
+      },
+      "green": {
+        "label": "Low Risk \u2014 Protected",
+        "pseudoFunction": "trademark_registered == true AND no_conflicts_detected == true",
+        "humanReadable": "Trademark registered with no conflicts detected.",
+        "dataPointsUsed": [
+          "trademark_registered",
+          "trademark_conflict_detected"
+        ]
+      }
+    },
+    "dataPoints": [
+      {
+        "field": "trademark_conflict_detected",
+        "displayName": "Trademark Conflict Detected",
+        "description": "Whether a conflicting mark has been identified via search or notice.",
+        "usedInLogic": [
+          "red",
+          "green"
+        ],
+        "source": {
+          "type": "External",
+          "name": "USPTO",
+          "display": "External: USPTO",
+          "availability": "Available",
+          "notes": "USPTO TESS search.",
+          "gap": null
+        },
+        "flywheelStage": "ingestion"
+      },
+      {
+        "field": "trademark_registered",
+        "displayName": "Trademark Registered",
+        "description": "Whether the business has an active federal trademark registration.",
+        "usedInLogic": [
+          "green"
+        ],
+        "source": {
+          "type": "External",
+          "name": "USPTO",
+          "display": "External: USPTO",
+          "availability": "Available",
+          "notes": "USPTO registration status.",
+          "gap": null
+        },
+        "flywheelStage": "businessProfile"
+      }
+    ],
+    "flywheel": {
+      "ingestion": {
+        "status": "complete",
+        "sources": [
+          {
+            "name": "USPTO",
+            "type": "External"
+          },
+          {
+            "name": "Internal: BP/DB",
+            "type": "Internal"
+          }
+        ]
+      },
+      "businessProfile": {
+        "status": "complete",
+        "fields": [
+          "trademark_registered",
+          "trademark_conflict_detected",
+          "trademark_search_completed"
+        ]
+      },
+      "customerIntelligence": {
+        "status": "complete",
+        "riskFunction": {
+          "name": "business_name_conflict_v1"
+        }
+      },
+      "presentation": {
+        "status": "complete",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": "green",
+      "currentConfidence": 0.88,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "licenses_permits",
+    "name": "Licenses & Permits",
+    "category": "bc",
+    "priority": "P0",
+    "status": "validation",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$50k",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Operating without required licenses or with lapsed permits creates regulatory and financial exposure.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Missing or Expired License",
+        "description": {
+          "risk": "Entity is operating without required business license or with a lapsed permit.",
+          "impact": "Fines, forced closure, or inability to operate in regulated industries."
+        },
+        "triggers": [
+          {
+            "trigger": "License expiration not tracked",
+            "dataSignal": "License renewal dates",
+            "sources": [
+              "LegalZoom Compliance",
+              "State/Local Agencies"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 License Lapsed",
+        "pseudoFunction": "IF(license_status == 'expired' OR license_status == 'missing')",
+        "humanReadable": "Required license is expired or missing.",
+        "nextBestAction": "Renew or Obtain License",
+        "dataPointsUsed": [
+          "license_status",
+          "license_expiry_date"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor \u2014 Expiring Soon",
+        "pseudoFunction": "IF((license_expiry_date - today) <= 60 AND license_status == 'active')",
+        "humanReadable": "License active but expiring within 60 days.",
+        "nextBestAction": "Renew License",
+        "dataPointsUsed": [
+          "license_status",
+          "license_expiry_date"
+        ]
+      },
+      "green": {
+        "label": "Low Risk \u2014 Current",
+        "pseudoFunction": "license_status == 'active' AND (license_expiry_date - today) > 60",
+        "humanReadable": "All required licenses are active and not expiring soon.",
+        "dataPointsUsed": [
+          "license_status",
+          "license_expiry_date"
+        ]
+      }
+    },
+    "dataPoints": [
+      {
+        "field": "license_status",
+        "displayName": "License Status",
+        "description": "Current status of all required business licenses and permits.",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "External",
+          "name": "State/Local Agencies",
+          "display": "External: State/Local",
+          "availability": "Partial",
+          "notes": "Data availability varies by jurisdiction.",
+          "gap": "Coverage incomplete for municipalities with no API."
+        },
+        "flywheelStage": "ingestion"
+      }
+    ],
+    "flywheel": {
+      "ingestion": {
+        "status": "in_progress",
+        "sources": [
+          {
+            "name": "State/Local Agencies",
+            "type": "External"
+          },
+          {
+            "name": "Internal: BP/DB",
+            "type": "Internal"
+          }
+        ]
+      },
+      "businessProfile": {
+        "status": "in_progress",
+        "fields": [
+          "license_status",
+          "license_expiry_date"
+        ]
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": [
+        {
+          "flag": "Data coverage gap",
+          "detail": "License data from municipalities is highly fragmented. Coverage incomplete for ~40% of jurisdictions.",
+          "owner": "Engineering",
+          "severity": "high"
+        }
+      ]
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "entity_type_tax_election",
+    "name": "Entity Type & Tax Election",
+    "category": "bat",
+    "priority": "P1",
+    "status": "in_dev",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$30k",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Wrong entity structure or missed tax elections can result in unnecessary tax burden.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Suboptimal Entity Type",
+        "description": {
+          "risk": "Entity is structured in a way that creates unnecessary tax burden for the owner.",
+          "impact": "Owner may be paying self-employment tax on income that could be sheltered via S-Corp election or other mechanisms."
+        },
+        "triggers": [
+          {
+            "trigger": "S-Corp election deadline passed",
+            "dataSignal": "Entity type, formation date, revenue",
+            "sources": [
+              "IRS",
+              "LegalZoom BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Missed Election",
+        "pseudoFunction": "IF(entity_type == 'LLC' AND revenue > 75000 AND scorp_election_filed == false AND scorp_deadline_passed == true)",
+        "humanReadable": "LLC with revenue over $75k that missed S-Corp election window.",
+        "nextBestAction": "Consult Tax Professional",
+        "dataPointsUsed": [
+          "entity_type",
+          "annual_revenue",
+          "scorp_election_filed",
+          "scorp_deadline_date"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor \u2014 Election Window Open",
+        "pseudoFunction": "IF(entity_type == 'LLC' AND revenue > 50000 AND scorp_election_filed == false AND days_until_scorp_deadline <= 30)",
+        "humanReadable": "LLC approaching S-Corp election window with meaningful revenue.",
+        "nextBestAction": "Review S-Corp Election",
+        "dataPointsUsed": [
+          "entity_type",
+          "annual_revenue",
+          "scorp_election_filed"
+        ]
+      },
+      "green": {
+        "label": "Low Risk \u2014 Optimized",
+        "pseudoFunction": "scorp_election_filed == true OR (entity_type == 'LLC' AND revenue < 50000)",
+        "humanReadable": "Tax structure is optimized or revenue too low to benefit from S-Corp.",
+        "dataPointsUsed": [
+          "entity_type",
+          "annual_revenue",
+          "scorp_election_filed"
+        ]
+      }
+    },
+    "dataPoints": [
+      {
+        "field": "entity_type",
+        "displayName": "Entity Type",
+        "description": "Legal entity type (LLC, Corp, Sole Prop, etc.)",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Available",
+          "notes": "From Business Profile.",
+          "gap": null
+        },
+        "flywheelStage": "businessProfile"
+      },
+      {
+        "field": "annual_revenue",
+        "displayName": "Annual Revenue",
+        "description": "Self-reported or estimated annual revenue for the entity.",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Partial",
+          "notes": "Self-reported \u2014 may be stale or missing.",
+          "gap": "Revenue data is self-reported and may not be current."
+        },
+        "flywheelStage": "businessProfile"
+      }
+    ],
+    "flywheel": {
+      "ingestion": {
+        "status": "complete",
+        "sources": [
+          {
+            "name": "Internal: BP/DB",
+            "type": "Internal"
+          },
+          {
+            "name": "IRS",
+            "type": "External"
+          }
+        ]
+      },
+      "businessProfile": {
+        "status": "complete",
+        "fields": [
+          "entity_type",
+          "annual_revenue",
+          "scorp_election_filed"
+        ]
+      },
+      "customerIntelligence": {
+        "status": "in_progress",
+        "riskFunction": {
+          "name": "entity_type_tax_election_v1"
+        }
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": [
+        {
+          "flag": "Revenue data quality",
+          "detail": "Self-reported revenue may be stale. Consider prompting users to confirm annually.",
+          "owner": "Product",
+          "severity": "medium"
+        }
+      ]
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "registered_agent_failure",
+    "name": "Registered Agent Failure",
+    "category": "bc",
+    "priority": "P1",
+    "status": "in_dev",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$20k",
+    "severity": 4,
+    "likelihood": 2,
+    "summary": "Failure to maintain a registered agent can result in missed legal notices and loss of good standing.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Lapsed Registered Agent",
+        "description": {
+          "risk": "Registered agent has resigned or expired with no replacement designated.",
+          "impact": "Entity may miss service of process, lawsuits, or regulatory notices. Could lose good standing."
+        },
+        "triggers": [
+          {
+            "trigger": "RA resignation without replacement",
+            "dataSignal": "RA status",
+            "sources": [
+              "LegalZoom Compliance",
+              "SOS"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 No Active RA",
+        "pseudoFunction": "IF(registered_agent_status == 'resigned' OR registered_agent_status == 'lapsed')",
+        "humanReadable": "No active registered agent on file.",
+        "nextBestAction": "Designate Registered Agent",
+        "dataPointsUsed": [
+          "registered_agent_status",
+          "registered_agent_name"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor \u2014 RA Expiring",
+        "pseudoFunction": "IF(registered_agent_expiry_days <= 30)",
+        "humanReadable": "Registered agent subscription expiring within 30 days.",
+        "nextBestAction": "Renew Registered Agent",
+        "dataPointsUsed": [
+          "registered_agent_status",
+          "registered_agent_expiry_date"
+        ]
+      },
+      "green": {
+        "label": "Low Risk \u2014 Active",
+        "pseudoFunction": "registered_agent_status == 'active' AND registered_agent_expiry_days > 30",
+        "humanReadable": "Active registered agent with no expiration concerns.",
+        "dataPointsUsed": [
+          "registered_agent_status"
+        ]
+      }
+    },
+    "dataPoints": [
+      {
+        "field": "registered_agent_status",
+        "displayName": "Registered Agent Status",
+        "description": "Current status of the entity's registered agent designation.",
+        "usedInLogic": [
+          "red",
+          "yellow",
+          "green"
+        ],
+        "source": {
+          "type": "Internal",
+          "name": "BP/DB",
+          "display": "Internal: BP/DB",
+          "availability": "Available",
+          "notes": "From LZ Registered Agent subscription data.",
+          "gap": null
+        },
+        "flywheelStage": "businessProfile"
+      }
+    ],
+    "flywheel": {
+      "ingestion": {
+        "status": "complete",
+        "sources": [
+          {
+            "name": "Internal: BP/DB",
+            "type": "Internal"
+          }
+        ]
+      },
+      "businessProfile": {
+        "status": "in_progress",
+        "fields": [
+          "registered_agent_status",
+          "registered_agent_name",
+          "registered_agent_expiry_date"
+        ]
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "founder_equity_split",
+    "name": "Founder Equity Split",
+    "category": "bso",
+    "priority": "P1",
+    "status": "in_definition",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$500k+",
+    "severity": 5,
+    "likelihood": 3,
+    "summary": "Undocumented or unequal equity splits lead to founder disputes and cap table chaos.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Equity Split Dispute",
+        "description": {
+          "risk": "Founders have not formally documented equity split or have informal agreements that may not hold up legally.",
+          "impact": "Costly litigation, inability to raise funding, business shutdown."
+        },
+        "triggers": [
+          {
+            "trigger": "No cap table on file",
+            "dataSignal": "Document inventory",
+            "sources": [
+              "LegalZoom BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk",
+        "pseudoFunction": "IF(cap_table_exists == false OR equity_split_documented == false)",
+        "humanReadable": "No cap table or equity split documentation.",
+        "nextBestAction": "Document Equity Split",
+        "dataPointsUsed": [
+          "cap_table_exists",
+          "equity_split_documented"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "IF(equity_split_is_equal == false AND vesting_schedule_exists == false)",
+        "humanReadable": "Unequal split with no vesting schedule.",
+        "nextBestAction": "Add Vesting Schedule",
+        "dataPointsUsed": [
+          "equity_split_is_equal",
+          "vesting_schedule_exists"
+        ]
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "cap_table_exists == true AND vesting_schedule_exists == true",
+        "humanReadable": "Cap table and vesting documented.",
+        "dataPointsUsed": [
+          "cap_table_exists",
+          "vesting_schedule_exists"
+        ]
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "personal_liability_veil_piercing",
+    "name": "Personal Liability / Veil Piercing",
+    "category": "bso",
+    "priority": "P1",
+    "status": "in_definition",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$50k\u2013$1M+",
+    "severity": 5,
+    "likelihood": 2,
+    "summary": "Commingling funds or ignoring corporate formalities can expose personal assets.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Corporate Veil Piercing",
+        "description": {
+          "risk": "Owner mixes personal and business finances or fails to maintain corporate formalities.",
+          "impact": "Courts may disregard LLC/Corp protection, exposing personal assets to business liabilities."
+        },
+        "triggers": [
+          {
+            "trigger": "No separate business bank account",
+            "dataSignal": "Banking data",
+            "sources": [
+              "LegalZoom BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk",
+        "pseudoFunction": "IF(separate_bank_account == false OR annual_meeting_held == false)",
+        "humanReadable": "No separate business account or annual meeting not held.",
+        "nextBestAction": "Open Business Bank Account",
+        "dataPointsUsed": [
+          "separate_bank_account",
+          "annual_meeting_held"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "IF(minutes_last_recorded_days > 365)",
+        "humanReadable": "Corporate minutes not recorded in over a year.",
+        "nextBestAction": "Record Corporate Minutes",
+        "dataPointsUsed": [
+          "minutes_last_recorded_date"
+        ]
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "separate_bank_account == true AND annual_meeting_held == true AND minutes_current == true",
+        "humanReadable": "All corporate formalities maintained.",
+        "dataPointsUsed": [
+          "separate_bank_account",
+          "annual_meeting_held"
+        ]
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "foreign_qualification",
+    "name": "Foreign Qualification",
+    "category": "ms",
+    "priority": "P1",
+    "status": "in_definition",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$15k",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Operating in a state without proper foreign qualification creates fines and back-tax exposure.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Unregistered Foreign Operations",
+        "description": {
+          "risk": "Entity is conducting business in a state where it is not registered as a foreign entity.",
+          "impact": "Fines, back taxes, inability to enforce contracts in that state."
+        },
+        "triggers": [
+          {
+            "trigger": "Employee or office in new state",
+            "dataSignal": "Location data",
+            "sources": [
+              "LegalZoom BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk",
+        "pseudoFunction": "IF(operating_states_count > registered_states_count)",
+        "humanReadable": "Operating in states where not registered.",
+        "nextBestAction": "File Foreign Qualification",
+        "dataPointsUsed": [
+          "operating_states",
+          "registered_states"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "IF(new_state_activity_detected == true AND foreign_qual_pending == false)",
+        "humanReadable": "New state activity detected without registration.",
+        "nextBestAction": "Evaluate Foreign Qualification",
+        "dataPointsUsed": [
+          "new_state_activity_detected",
+          "foreign_qual_status"
+        ]
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "registered_states == operating_states",
+        "humanReadable": "Registered in all states where operating.",
+        "dataPointsUsed": [
+          "operating_states",
+          "registered_states"
+        ]
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "contractor_misclassification",
+    "name": "Contractor Misclassification",
+    "category": "hr",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$100k+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Misclassifying employees as contractors creates IRS and labor law exposure.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Worker Misclassification",
+        "description": {
+          "risk": "Business is treating W-2 employees as 1099 contractors, violating IRS and labor law rules.",
+          "impact": "Back taxes, penalties, benefits liability, potential class action."
+        },
+        "triggers": [
+          {
+            "trigger": "High contractor count relative to revenue",
+            "dataSignal": "Workforce data",
+            "sources": [
+              "LegalZoom BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk",
+        "pseudoFunction": "IF(contractor_to_employee_ratio > 0.7 AND avg_contractor_tenure_months > 12)",
+        "humanReadable": "High contractor ratio with long tenures \u2014 probable misclassification.",
+        "nextBestAction": "HR & Legal Review",
+        "dataPointsUsed": [
+          "contractor_count",
+          "employee_count",
+          "avg_contractor_tenure"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "IF(contractor_to_employee_ratio > 0.4 AND no_contractor_agreements == true)",
+        "humanReadable": "High contractor use without proper agreements.",
+        "nextBestAction": "Review Contractor Agreements",
+        "dataPointsUsed": [
+          "contractor_count",
+          "contractor_agreements_on_file"
+        ]
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "contractor_to_employee_ratio <= 0.3 AND all_contractors_have_agreements == true",
+        "humanReadable": "Contractor use is proportionate and properly documented.",
+        "dataPointsUsed": [
+          "contractor_count",
+          "contractor_agreements_on_file"
+        ]
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "cash_flow_insolvency",
+    "name": "Cash Flow & Insolvency Risk",
+    "category": "fcc",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$0\u2013$500k+",
+    "severity": 5,
+    "likelihood": 3,
+    "summary": "Cash flow gaps or insolvency signals may indicate an entity at risk of dissolution.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Insolvency Indicators",
+        "description": {
+          "risk": "Entity showing signs of financial distress that may lead to insolvency.",
+          "impact": "Business closure, personal liability if formalities not maintained."
+        },
+        "triggers": [
+          {
+            "trigger": "Negative cash flow trend",
+            "dataSignal": "Financial data",
+            "sources": [
+              "Open Banking",
+              "LZ Payment Data"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk",
+        "pseudoFunction": "IF(cash_runway_months < 1 OR payment_failures_last_90d > 3)",
+        "humanReadable": "Less than 1 month runway or multiple payment failures.",
+        "nextBestAction": "Emergency Financial Review",
+        "dataPointsUsed": [
+          "cash_runway_months",
+          "payment_failure_count"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "IF(cash_runway_months < 3 OR revenue_decline_pct > 30)",
+        "humanReadable": "Less than 3 months runway or significant revenue decline.",
+        "nextBestAction": "Financial Planning Review",
+        "dataPointsUsed": [
+          "cash_runway_months",
+          "revenue_trend"
+        ]
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "cash_runway_months >= 6 AND revenue_trend == 'stable_or_growing'",
+        "humanReadable": "Healthy runway and stable revenue.",
+        "dataPointsUsed": [
+          "cash_runway_months",
+          "revenue_trend"
+        ]
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "dormant_entity_risk",
+    "name": "Dormant Entity Risk",
+    "category": "bc",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$1k\u2013$10k",
+    "severity": 2,
+    "likelihood": 4,
+    "summary": "Entities with no activity may still have filing obligations or outstanding liabilities.",
+    "scenarios": [
+      {
+        "id": "s001",
+        "name": "Abandoned Entity with Active Obligations",
+        "description": {
+          "risk": "Owner has stopped using the entity but hasn't formally dissolved it.",
+          "impact": "Ongoing annual report obligations, potential fines, and residual liability."
+        },
+        "triggers": [
+          {
+            "trigger": "No transactions in 12+ months",
+            "dataSignal": "Activity data",
+            "sources": [
+              "LZ Payment Data",
+              "BP/DB"
+            ]
+          }
+        ]
+      }
+    ],
+    "logic": {
+      "red": {
+        "label": "High Risk",
+        "pseudoFunction": "IF(last_activity_months > 24 AND dissolution_filed == false AND annual_report_due == true)",
+        "humanReadable": "No activity in 2 years with unfiled obligations.",
+        "nextBestAction": "Dissolve or Reinstate Entity",
+        "dataPointsUsed": [
+          "last_activity_date",
+          "dissolution_filed",
+          "annual_report_status"
+        ]
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "IF(last_activity_months > 12 AND dissolution_filed == false)",
+        "humanReadable": "No activity in over a year \u2014 may be dormant.",
+        "nextBestAction": "Review Entity Status",
+        "dataPointsUsed": [
+          "last_activity_date",
+          "dissolution_filed"
+        ]
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "last_activity_months < 6 OR dissolution_filed == true",
+        "humanReadable": "Entity is active or properly dissolved.",
+        "dataPointsUsed": [
+          "last_activity_date"
+        ]
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "ip_ownership_risk",
+    "name": "IP Ownership Risk",
+    "category": "bso",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$500k+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Unclear IP ownership between founders, employees, or contractors creates ownership disputes and valuation risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "IP created by founders or contractors has not been formally assigned to the entity.",
+        "nextBestAction": "Assign IP Ownership",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "IP ownership is informal or unclear \u2014 assignment agreements may be missing.",
+        "nextBestAction": "Audit IP Ownership",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All IP is formally assigned to the entity with signed agreements on file.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "asset_ownership_cleanup",
+    "name": "Asset Ownership Cleanup",
+    "category": "bso",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$100k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Business assets held in personal names or without clear title create liability and transfer complications.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key business assets are held in personal names rather than the entity.",
+        "nextBestAction": "Transfer Assets to Entity",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Some assets may be improperly titled \u2014 review needed.",
+        "nextBestAction": "Review Asset Titles",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All significant business assets are properly titled in the entity's name.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "founder_personal_guarantees",
+    "name": "Founder Personal Guarantees",
+    "category": "bso",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$1M+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Founders who personally guarantee business debt expose personal assets if the business defaults.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Founder has unlimited personal guarantees on business obligations.",
+        "nextBestAction": "Review & Limit Guarantees",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Founder has personal guarantees \u2014 monitoring for exposure.",
+        "nextBestAction": "Monitor Guarantee Exposure",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Personal guarantee exposure is minimal and well-understood.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "improper_dissolution",
+    "name": "Improper Dissolution",
+    "category": "bc",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$25k",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Failure to formally dissolve an entity leaves ongoing obligations and personal liability.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Entity is being wound down without formal dissolution filing.",
+        "nextBestAction": "File Formal Dissolution",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Entity may be dormant but not formally dissolved.",
+        "nextBestAction": "Review Dissolution Status",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Entity is either active in good standing or formally dissolved.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "sales_tax_noncompliance",
+    "name": "Sales Tax Non-Compliance",
+    "category": "bat",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$250k+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Collecting or remitting sales tax incorrectly creates back-tax, penalties, and audit risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business is collecting or failing to collect/remit sales tax incorrectly.",
+        "nextBestAction": "Engage Tax Professional",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Sales tax nexus may have changed \u2014 review required.",
+        "nextBestAction": "Audit Sales Tax Obligations",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Sales tax obligations are current and properly remitted in all nexus states.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "income_tax_underpayment",
+    "name": "Income Tax Underpayment",
+    "category": "bat",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$50k+",
+    "severity": 3,
+    "likelihood": 4,
+    "summary": "Failure to make estimated tax payments leads to IRS penalties and unexpected tax bills.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Insufficient estimated tax payments have been made for the current year.",
+        "nextBestAction": "Consult Tax Professional",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Estimated tax payments may be underfunded based on revenue.",
+        "nextBestAction": "Review Estimated Payments",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Estimated tax payments are on track and current.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "founder_compensation_errors",
+    "name": "Founder Compensation Errors",
+    "category": "bat",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$100k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Improper founder compensation (draws vs. salary) can trigger IRS scrutiny and payroll tax issues.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "S-Corp owner is not paying a reasonable salary, or compensation is improperly structured.",
+        "nextBestAction": "Set Reasonable Compensation",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Founder compensation structure may need review for tax compliance.",
+        "nextBestAction": "Review Compensation Structure",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Founder compensation is properly structured and documented.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "payroll_tax_errors",
+    "name": "Payroll Tax Errors",
+    "category": "bat",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$100k+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Payroll tax deposit failures and miscalculations lead to IRS trust fund penalties.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Payroll taxes are not being deposited correctly or on time.",
+        "nextBestAction": "Correct Payroll Immediately",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Payroll tax compliance needs verification.",
+        "nextBestAction": "Audit Payroll Records",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Payroll taxes are current and deposited on schedule.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "receivables_risk",
+    "name": "Receivables Risk (A/R)",
+    "category": "bat",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$500k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Growing or stale accounts receivable can signal cash flow problems and collection risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Significant overdue receivables with no collection plan in place.",
+        "nextBestAction": "Escalate Collections",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "A/R aging shows some at-risk balances.",
+        "nextBestAction": "Monitor A/R Aging",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "A/R is current and within normal collection cycle.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "employment_tax_underpayment",
+    "name": "Employment Tax Underpayment",
+    "category": "bat",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$250k+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Failure to properly withhold and remit employment taxes creates IRS trust fund penalties.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Employment taxes (FICA, FUTA) not properly withheld or remitted.",
+        "nextBestAction": "Correct Tax Deposits Immediately",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Employment tax compliance needs verification.",
+        "nextBestAction": "Audit Withholding",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Employment taxes are properly withheld and remitted.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "liquidity_shortfall",
+    "name": "Liquidity Shortfall",
+    "category": "fcc",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$1M+",
+    "severity": 5,
+    "likelihood": 3,
+    "summary": "Insufficient liquid assets to cover near-term obligations creates operational and solvency risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business has less than 30 days of operating runway.",
+        "nextBestAction": "Emergency Capital Review",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Cash runway is less than 90 days \u2014 monitoring required.",
+        "nextBestAction": "Monitor Cash Position",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Sufficient cash runway (6+ months) to cover operating obligations.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "excess_leverage",
+    "name": "Excess Leverage / Debt Ratio",
+    "category": "fcc",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$1M+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Excessive debt relative to assets or revenue creates covenant risk and limits future financing options.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Debt-to-equity or debt service coverage ratios exceed safe thresholds.",
+        "nextBestAction": "Debt Restructuring Review",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Leverage ratios are elevated and trending in the wrong direction.",
+        "nextBestAction": "Monitor Debt Ratios",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Debt levels are manageable and within healthy ratios.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "covenant_breach_risk",
+    "name": "Covenant Breach Risk",
+    "category": "fcc",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$50k\u2013$5M+",
+    "severity": 5,
+    "likelihood": 2,
+    "summary": "Violating loan covenants can trigger immediate repayment demands and damage lender relationships.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "One or more loan covenants have been breached.",
+        "nextBestAction": "Engage Lender Immediately",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Covenant ratios are approaching breach thresholds.",
+        "nextBestAction": "Review Covenant Compliance",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All loan covenants are being met with adequate headroom.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "weak_business_credit",
+    "name": "Weak Business Credit Profile",
+    "category": "fcc",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$0 (access to capital)",
+    "severity": 3,
+    "likelihood": 4,
+    "summary": "Poor business credit limits access to financing and results in worse terms on business obligations.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business credit score is poor or no business credit profile exists.",
+        "nextBestAction": "Credit Building Plan",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business credit profile is thin or improving but not yet strong.",
+        "nextBestAction": "Monitor Business Credit",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Strong business credit profile with established payment history.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "financing_inaccessibility",
+    "name": "Financing Inaccessibility",
+    "category": "fcc",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$0 (opportunity cost)",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Inability to access capital when needed can prevent growth or threaten survival.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business has been denied financing or has no established credit facilities.",
+        "nextBestAction": "Explore Alternative Financing",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Access to financing is limited \u2014 proactive relationship building needed.",
+        "nextBestAction": "Maintain Banking Relationships",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business has access to adequate financing and established credit relationships.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "personal_guarantee_growth",
+    "name": "Personal Guarantee Exposure During Growth",
+    "category": "fcc",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$2M+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "As the business grows, personal guarantees on business obligations can create outsized personal risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Personal guarantees significantly exceed business assets or ability to repay.",
+        "nextBestAction": "Review & Renegotiate Guarantees",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Personal guarantee exposure is growing alongside business obligations.",
+        "nextBestAction": "Monitor Guarantee Exposure",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Personal guarantee exposure is minimal relative to business assets.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "wage_hour_violations",
+    "name": "Wage & Hour Violations",
+    "category": "hr",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$500k+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Failure to pay minimum wage, overtime, or correct final pay creates significant legal exposure.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Pay practices do not comply with FLSA or state wage and hour laws.",
+        "nextBestAction": "HR & Legal Audit",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Pay practices need review for minimum wage and overtime compliance.",
+        "nextBestAction": "Review Pay Practices",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Pay practices are fully compliant with federal and state wage laws.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "hiring_process_risk",
+    "name": "Hiring Process Risk",
+    "category": "hr",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$200k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Non-compliant hiring practices (background checks, offer letters, EEO) create discrimination claims.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Hiring practices have material compliance gaps or discrimination risk.",
+        "nextBestAction": "Legal Review of Hiring Process",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Hiring process may need updates to reflect current legal requirements.",
+        "nextBestAction": "Audit Hiring Practices",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Hiring process is compliant with EEO, FCRA, and applicable state laws.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "termination_retaliation",
+    "name": "Termination & Retaliation Risk",
+    "category": "hr",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$500k+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Improperly documented terminations and retaliation claims create significant employment law exposure.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Recent termination(s) lack proper documentation or show retaliation risk factors.",
+        "nextBestAction": "HR & Legal Review",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Termination processes need review for documentation and consistency.",
+        "nextBestAction": "Document Termination Procedures",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Terminations are properly documented and follow consistent, compliant procedures.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "employment_policies",
+    "name": "Employment Policies",
+    "category": "hr",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$100k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Missing or outdated employee handbook and policies create legal exposure and inconsistent enforcement.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No employee handbook exists or policies are significantly outdated.",
+        "nextBestAction": "Update Employee Handbook",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Employee policies may need updates for current legal requirements.",
+        "nextBestAction": "Review Policy Currency",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Employee handbook is current, legally compliant, and acknowledged by all employees.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "workers_comp_noncompliance",
+    "name": "Workers' Comp Non-Compliance",
+    "category": "hr",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$1M+",
+    "severity": 5,
+    "likelihood": 2,
+    "summary": "Operating without required workers' compensation insurance is illegal in most states.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business lacks required workers' compensation coverage.",
+        "nextBestAction": "Obtain Workers' Comp Coverage Immediately",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Workers' comp coverage needs verification for all states of operation.",
+        "nextBestAction": "Verify Coverage",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Workers' compensation coverage is in place for all employees and jurisdictions.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "employee_contractor_gaps",
+    "name": "Employee & Contractor Contract Gaps",
+    "category": "hr",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$200k+",
+    "severity": 3,
+    "likelihood": 4,
+    "summary": "Missing NDAs, IP assignments, and offer letters create disputes and exposure.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key employees or contractors lack signed agreements (NDA, IP assignment, offer letter).",
+        "nextBestAction": "Audit & Execute Missing Agreements",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Some employees or contractors may be missing required agreements.",
+        "nextBestAction": "Review Contract Coverage",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All employees and contractors have complete, signed agreements on file.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "trademark_protection",
+    "name": "Trademark Protection & Enforcement",
+    "category": "ip",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$250k+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Failure to register and enforce trademarks leaves brand vulnerable to infringement and dilution.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Core trademarks are not registered or registration has lapsed.",
+        "nextBestAction": "File Trademark Application",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Trademark registration is pending or not yet filed.",
+        "nextBestAction": "Monitor Trademark Status",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Core trademarks are registered, maintained, and actively enforced.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "trade_secret_leakage",
+    "name": "Trade Secret Leakage",
+    "category": "ip",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$10M+",
+    "severity": 5,
+    "likelihood": 2,
+    "summary": "Inadequate protection of trade secrets risks competitive advantage and legal recourse.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Trade secrets are not adequately protected or NDAs are missing.",
+        "nextBestAction": "Implement Trade Secret Protections",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Trade secret protection measures need strengthening.",
+        "nextBestAction": "Audit Information Security",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Trade secrets are protected by NDAs, access controls, and documented protocols.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "data_privacy_noncompliance",
+    "name": "Data Privacy Non-Compliance",
+    "category": "ip",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$1M+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Violations of CCPA, GDPR, or other privacy regulations create regulatory fines and reputational damage.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business is not compliant with applicable data privacy laws.",
+        "nextBestAction": "Privacy Compliance Audit",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Data privacy practices need review for current regulatory requirements.",
+        "nextBestAction": "Monitor Privacy Obligations",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business is compliant with all applicable data privacy regulations.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "advertising_claims",
+    "name": "Advertising Claims Risk",
+    "category": "ip",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$500k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "False or misleading advertising claims create FTC liability and competitor litigation risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Advertising contains unsubstantiated or potentially false claims.",
+        "nextBestAction": "Legal Review of Marketing Materials",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Advertising claims need legal review for compliance.",
+        "nextBestAction": "Monitor Claims",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All advertising claims are substantiated and compliant with FTC guidelines.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "copyright_protection",
+    "name": "Copyright Protection",
+    "category": "ip",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$150k+",
+    "severity": 3,
+    "likelihood": 2,
+    "summary": "Unregistered copyrights limit remedies and allow competitors to freely copy original work.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key original works are not copyright-registered, limiting legal remedies.",
+        "nextBestAction": "Register Key Copyrights",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Copyright registration strategy needs review.",
+        "nextBestAction": "Audit Copyright Portfolio",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key original works are registered, providing full statutory damages protection.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "customer_contract_gaps",
+    "name": "Customer Contract Gaps",
+    "category": "ct",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$1M+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Operating without complete customer agreements creates payment, liability, and IP disputes.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Significant revenue is generated without proper customer contracts.",
+        "nextBestAction": "Implement Standard Customer Agreements",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Customer contracts may be missing key protective provisions.",
+        "nextBestAction": "Audit Contract Coverage",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All customers have complete, enforceable agreements with appropriate protections.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "vendor_contract_renewal",
+    "name": "Vendor Contract Renewal Risk",
+    "category": "ct",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$500k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Expired or auto-renewing vendor contracts create unexpected obligations and missed renegotiation windows.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key vendor contracts have expired or are auto-renewing without review.",
+        "nextBestAction": "Audit Vendor Contracts",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Vendor contract renewal dates need tracking.",
+        "nextBestAction": "Set Renewal Reminders",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All vendor contracts are current with renewal dates tracked and managed.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "platform_dependency_risk",
+    "name": "Platform Dependency Risk",
+    "category": "ct",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$5M+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Over-reliance on a single platform (Amazon, Google, Shopify) creates concentration risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business is critically dependent on a single platform that could de-platform or change terms.",
+        "nextBestAction": "Diversify Revenue Channels",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Significant revenue concentration in one platform \u2014 diversification needed.",
+        "nextBestAction": "Monitor Platform Concentration",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Revenue is diversified across multiple channels with no critical platform dependency.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "commercial_leases",
+    "name": "Commercial Lease Risk",
+    "category": "ct",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$500k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Unfavorable lease terms, personal guarantees, or missed renewal windows create occupancy risk.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Commercial lease has unfavorable terms, is expiring, or has personal guarantee exposure.",
+        "nextBestAction": "Legal Review of Lease Terms",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Commercial lease renewal window approaching \u2014 review needed.",
+        "nextBestAction": "Track Lease Renewal Dates",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Commercial leases are current with favorable terms and tracked renewal dates.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "inventory_other_states",
+    "name": "Inventory in Other States",
+    "category": "ms",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$50k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Storing inventory in another state may create sales tax nexus and registration requirements.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Inventory stored in another state creating unacknowledged tax nexus.",
+        "nextBestAction": "Assess Nexus Obligations",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Inventory locations may be creating nexus in additional states.",
+        "nextBestAction": "Monitor Inventory Locations",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "All inventory nexus implications are identified and addressed.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "threePL_warehouse_triggers",
+    "name": "3PL / Warehouse Nexus Triggers",
+    "category": "ms",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$2k\u2013$50k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Third-party logistics and warehouse relationships can create tax nexus in states where you don't operate.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "3PL or warehouse agreements creating unrecognized tax nexus.",
+        "nextBestAction": "Assess 3PL Nexus",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "3PL relationships may be triggering registration or tax obligations.",
+        "nextBestAction": "Monitor Warehouse Relationships",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "3PL and warehouse nexus implications are fully assessed and addressed.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "multistate_physical_presence",
+    "name": "Multi-state Physical Presence",
+    "category": "ms",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$100k+",
+    "severity": 3,
+    "likelihood": 3,
+    "summary": "Employees, offices, or operations in additional states create registration, tax, and compliance obligations.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Physical presence in states without proper registration or compliance.",
+        "nextBestAction": "Register in All Active States",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "State footprint may have expanded without corresponding compliance steps.",
+        "nextBestAction": "Monitor State Footprint",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Registered and compliant in all states where physical presence exists.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "vendor_concentration",
+    "name": "Vendor Concentration Fragility",
+    "category": "ms",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$1M+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Over-reliance on a single supplier creates supply chain risk that can halt operations.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Critical operations depend on a single vendor with no backup.",
+        "nextBestAction": "Diversify Vendor Base",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Vendor concentration is elevated \u2014 contingency planning needed.",
+        "nextBestAction": "Monitor Vendor Concentration",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Vendor base is diversified with backup suppliers for critical inputs.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "general_liability_gap",
+    "name": "General Liability Coverage Gap",
+    "category": "ins",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$5M+",
+    "severity": 5,
+    "likelihood": 3,
+    "summary": "Operating without adequate general liability insurance exposes the business to catastrophic loss from claims.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No general liability coverage or coverage is significantly insufficient.",
+        "nextBestAction": "Obtain General Liability Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "General liability coverage limits may be inadequate for current operations.",
+        "nextBestAction": "Review Coverage Limits",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Adequate general liability coverage is in place for all business activities.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "epli_coverage_gap",
+    "name": "EPLI Coverage Gap",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$1M+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Employment Practices Liability Insurance (EPLI) protects against wrongful termination and discrimination claims.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No EPLI coverage in place despite having employees.",
+        "nextBestAction": "Obtain EPLI Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "EPLI coverage needs review for adequacy.",
+        "nextBestAction": "Review EPLI Limits",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "EPLI coverage is in place with appropriate limits for workforce size.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "cyber_insurance_gap",
+    "name": "Cyber Insurance Gap",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$10M+",
+    "severity": 4,
+    "likelihood": 4,
+    "summary": "Data breaches and ransomware attacks without cyber insurance create uninsured catastrophic losses.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No cyber insurance in place \u2014 significant exposure to ransomware and data breach costs.",
+        "nextBestAction": "Obtain Cyber Insurance",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Cyber insurance coverage needs review for adequacy.",
+        "nextBestAction": "Review Cyber Coverage",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Cyber insurance is in place with appropriate limits and breach response coverage.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "professional_liability_gap",
+    "name": "Professional Liability Gap (E&O)",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$2M+",
+    "severity": 4,
+    "likelihood": 3,
+    "summary": "Errors & Omissions insurance protects service businesses from client claims of professional mistakes.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No professional liability coverage for service-based business activities.",
+        "nextBestAction": "Obtain E&O Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "E&O coverage needs review for adequacy.",
+        "nextBestAction": "Review E&O Limits",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Adequate E&O coverage is in place for all professional services offered.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "directors_officers_gap",
+    "name": "Directors & Officers (D&O) Gap",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$5M+",
+    "severity": 4,
+    "likelihood": 2,
+    "summary": "D&O insurance protects directors and officers from personal liability for business decisions.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No D&O coverage \u2014 directors and officers exposed to personal liability.",
+        "nextBestAction": "Obtain D&O Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "D&O coverage needs review for board composition and risk.",
+        "nextBestAction": "Review D&O Limits",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Adequate D&O coverage is in place protecting all directors and officers.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "commercial_property_gap",
+    "name": "Commercial Property Coverage Gap",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$10k\u2013$2M+",
+    "severity": 4,
+    "likelihood": 2,
+    "summary": "Property and equipment losses without insurance can be catastrophic for asset-heavy businesses.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business property is uninsured or significantly underinsured.",
+        "nextBestAction": "Obtain Property Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Property insurance coverage may not reflect current asset values.",
+        "nextBestAction": "Review Property Values",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Commercial property is fully insured at replacement cost value.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "business_interruption_gap",
+    "name": "Business Interruption Coverage Gap",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$5M+",
+    "severity": 4,
+    "likelihood": 2,
+    "summary": "Business interruption insurance covers lost revenue during forced closures \u2014 often overlooked until needed.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No business interruption coverage \u2014 forced closure would mean zero revenue.",
+        "nextBestAction": "Add Business Interruption Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business interruption coverage needs review for adequacy.",
+        "nextBestAction": "Review BI Policy",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Business interruption coverage is in place with adequate revenue replacement limits.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "product_liability_gap",
+    "name": "Product Liability Coverage Gap",
+    "category": "ins",
+    "priority": "P0",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$10M+",
+    "severity": 5,
+    "likelihood": 2,
+    "summary": "Product-based businesses without product liability insurance face catastrophic exposure from injury claims.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No product liability coverage for physical products sold to customers.",
+        "nextBestAction": "Obtain Product Liability Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Product liability coverage needs review for current product lines.",
+        "nextBestAction": "Review Product Liability Limits",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Product liability coverage is in place for all products with adequate limits.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "fidelity_bond_insurance",
+    "name": "Fidelity Bond Insurance",
+    "category": "ins",
+    "priority": "P2",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$5k\u2013$500k+",
+    "severity": 3,
+    "likelihood": 2,
+    "summary": "Fidelity bonds protect against employee theft and fraud \u2014 often required by clients or contracts.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No fidelity bond in place \u2014 exposure to employee theft and fraud losses.",
+        "nextBestAction": "Obtain Fidelity Bond",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Fidelity bond coverage needs review.",
+        "nextBestAction": "Review Bond Coverage",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Fidelity bond is in place with coverage appropriate for business size.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  },
+  {
+    "id": "key_person_insurance",
+    "name": "Key Person Insurance",
+    "category": "ins",
+    "priority": "P1",
+    "status": "backlog",
+    "riskScore": null,
+    "confidence": null,
+    "exposure": "$25k\u2013$2M+",
+    "severity": 5,
+    "likelihood": 2,
+    "summary": "Loss of a founder or key employee without key person insurance can threaten business survival.",
+    "scenarios": [],
+    "logic": {
+      "red": {
+        "label": "High Risk \u2014 Action Required",
+        "pseudoFunction": "TBD",
+        "humanReadable": "No key person insurance on founder(s) or critical employees.",
+        "nextBestAction": "Obtain Key Person Coverage",
+        "dataPointsUsed": []
+      },
+      "yellow": {
+        "label": "Monitor",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key person insurance coverage needs review.",
+        "nextBestAction": "Review Key Person Exposure",
+        "dataPointsUsed": []
+      },
+      "green": {
+        "label": "Low Risk",
+        "pseudoFunction": "TBD",
+        "humanReadable": "Key person insurance is in place for all founders and critical personnel.",
+        "dataPointsUsed": []
+      }
+    },
+    "dataPoints": [],
+    "flywheel": {
+      "ingestion": {
+        "status": "not_started",
+        "sources": []
+      },
+      "businessProfile": {
+        "status": "not_started",
+        "fields": []
+      },
+      "customerIntelligence": {
+        "status": "not_started",
+        "riskFunction": null
+      },
+      "presentation": {
+        "status": "not_started",
+        "outputFormat": {}
+      }
+    },
+    "verifiableOutcomes": [],
+    "qualityAssurance": {
+      "currentScore": null,
+      "currentConfidence": null,
+      "openFlags": []
+    },
+    "dris": {
+      "legal": {
+        "name": "Kari McGlynn",
+        "email": "kmcglynn1@legalzoom.com"
+      },
+      "product": {
+        "name": "Rob Wegbrands",
+        "email": "rwegbrands@legalzoom.com"
+      },
+      "engineering": {
+        "name": "TBD",
+        "email": null
+      }
+    },
+    "notes": []
+  }
+]
